@@ -1,0 +1,86 @@
+name: Docker Images CI
+
+on:
+  push:
+    branches: ["main"]
+    tags:
+      - "v*"
+
+env:
+  REGISTRY: ghcr.io
+  ORG: langrocks
+  IMAGE_NAME_WEB_BROWSER: "langrocks-web-browser"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Install the cosign tool except on PR
+      # https://github.com/sigstore/cosign-installer
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3.5.0
+        with:
+          cosign-release: "v2.2.4"
+
+      # Setup QEMU for cross compilation
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      # Setup Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Login against a Docker registry except on PR
+      # https://github.com/docker/login-action
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2.2.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata for web browser
+        id: meta-web-browser
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME_WEB_BROWSER }}
+
+      # Build and push Docker image with Buildx (don't push on PR)
+      # https://github.com/docker/build-push-action
+      - name: Build and push Web Browser Docker image
+        id: build-and-push-web-browser
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-web-browser.outputs.tags }}
+          labels: ${{ steps.meta-web-browser.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          file: langrocks/docker/web_browser/Dockerfile
+          platforms: linux/amd64,linux/arm64
+
+      - name: Sign the published Web Browser Docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          TAGS: ${{ steps.meta-web-browser.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push-web-browser.outputs.digest }}
+        # This step uses the identity token to provision an ephemeral certificate
+        # against the sigstore community Fulcio instance.
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
