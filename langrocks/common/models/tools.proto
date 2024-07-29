@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+enum ContentMimeType {  
+  TEXT = 0; // text
+  JSON = 1; // json
+  HTML = 2; // html
+  PNG = 3; // png
+  JPEG = 4; // jpeg
+  SVG = 5; // svg
+  PDF = 6; // pdf
+  LATEX = 7; // latex
+  MARKDOWN = 8; // markdown
+  CSV = 9; // csv
+  ZIP = 10; // zip
+  TAR = 11; // tar
+  GZIP = 12; // gzip
+  BZIP2 = 13; // bzip2
+  XZ = 14; // xz
+  DOCX = 15; // docx
+  PPTX = 16; // pptx
+  XLSX = 17; // xlsx
+  DOC = 18; // doc
+  PPT = 19; // ppt
+  XLS = 20; // xls
+  C = 21; // c
+  CPP = 22; // cpp
+  JAVA = 23; // java
+  CSHARP = 24; // csharp
+  PYTHON = 25; // python
+  RUBY = 26; // ruby
+  PHP = 27; // php
+  JAVASCRIPT = 28; // javascript  
+  XML = 29; // xml
+  CSS = 30; // css
+  GIF = 31; // gif
+}
+
+message Content {
+  ContentMimeType mime_type = 1; // mime type of content
+  bytes data = 2; // data of content
+}
+
+enum WebBrowserCommandType {
+  GOTO = 0; // go to url
+  TERMINATE = 1; // terminate session
+  WAIT = 2; // wait for selector
+  CLICK = 3; // click selector
+  COPY = 4; // copy selector
+  TYPE = 5; // type selector
+  SCROLL_X = 6; // scroll horizontal
+  SCROLL_Y = 7; // scroll vertical
+  ENTER = 8; // enter
+}
+
+message WebBrowserCommandOutput {
+  int32 index = 1; // index of command
+  string output = 2; // output of command
+}
+
+message WebBrowserCommandError {
+  int32 index = 1; // index of command
+  string error = 2; // error of command
+}
+
+message WebBrowserInput {
+  WebBrowserCommandType type = 1; // command type
+  string selector = 2; // selector to use
+  string data = 3; // command data
+}
+
+message WebBrowserButton {
+  string selector = 1; // selector of button
+  string text = 2; // text of button
+}
+
+message WebBrowserInputField {
+  string selector = 1; // selector of input
+  string text = 2; // text of input
+}
+
+message WebBrowserSelectField {
+  string selector = 1; // selector of select
+  string text = 2; // text of select
+}
+
+message WebBrowserTextAreaField {
+  string selector = 1; // selector of textarea
+  string text = 2; // text of textarea
+}
+
+message WebBrowserLink {
+  string selector = 1; // selector of link
+  string text = 2; // text of link
+  string url = 3; // url of link
+}
+
+message WebBrowserOutput {
+  string url = 1; // url of page
+  string title = 2; // title of page
+  string html = 3; // html of page
+  string text = 4; // text of page
+  bytes screenshot = 5; // screenshot of page if available
+  repeated WebBrowserButton buttons = 6; // buttons on page
+  repeated WebBrowserInputField inputs = 7; // inputs on page
+  repeated WebBrowserSelectField selects = 8; // selects on page
+  repeated WebBrowserTextAreaField textareas = 9; // textareas on page
+  repeated WebBrowserLink links = 10; // links on page
+  repeated WebBrowserCommandOutput outputs = 11; // outputs of commands
+  repeated WebBrowserCommandError errors = 12; // errors of commands
+}
+
+message WebBrowserSessionConfig {
+  string init_url = 1; // url to open at the start
+  string terminate_url_pattern = 2; // url pattern to terminate session
+  string session_data = 3; // session data to restore  
+  int32 timeout = 4; // timeout in seconds
+  bool text_only = 5; // return text only output
+  bool html_only = 6; // return html only output
+  bool brief = 7; // brief output. Skips processing and returning individual elements
+  bool persist_session = 8; // persist session after done
+  bool capture_screenshot = 9; // capture screenshot of the session
+  bool interactive = 10; // interactive session with user inputs
+  bool record_video = 11; // record video of the session while running
+  bool skip_tags = 12; // skip annotating the page with tags before screenshot
+}
+
+enum WebBrowserState {
+  RUNNING = 0; // browser is running
+  TERMINATED = 1; // browser is terminated
+  TIMEOUT = 2; // browser is timed out
+}
+
+message WebBrowserSession {
+  string ws_url = 1; // websocket url to connect to for remote display
+  string session_data = 2; // session data to persist
+  bytes video = 3; // video of session
+}
+
+message WebBrowserRequest {
+  WebBrowserSessionConfig session_config = 1; // session configuation
+  repeated WebBrowserInput inputs = 2; // inputs to send to the browser
+}
+
+message WebBrowserResponse {
+  WebBrowserSession session = 1; // session data
+  WebBrowserState state = 2; // state of browser
+  WebBrowserOutput output = 3; // output from the browser after running inputs
+}
+
+service Tools {
+
+  rpc GetWebBrowser (stream WebBrowserRequest) returns (stream WebBrowserResponse) {}
+  
+}
