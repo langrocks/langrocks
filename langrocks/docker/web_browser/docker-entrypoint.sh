@@ -9,10 +9,11 @@ if [ -z "$RUNNER_REDIS_HOST" ] || [ "$RUNNER_REDIS_HOST" = "localhost" ] || [ "$
 fi
 
 if [ "x$ENABLE_PLAYWRIGHT_WS" != 'xoff' ]; then
-    echo "Starting playwright server on port ${PLAYWRIGHT_WS_PORT:-30000}"
-    playwright run-server --port ${PLAYWRIGHT_WS_PORT:-30000} &
+    echo "Starting playwright server on port ${PLAYWRIGHT_WS_PORT:-50053}"
+    playwright run-server --port ${PLAYWRIGHT_WS_PORT:-50053} &
 fi
 
 
 # Start langrocks server with web browser
-exec "$@"
+echo "Starting langrocks server with web browser"
+langrocks-server --with-streaming-web-browser --wss-hostname=${RUNNER_WSS_HOSTNAME:-localhost}

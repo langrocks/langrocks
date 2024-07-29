@@ -1,6 +1,7 @@
 from typing import Iterator
 
 from grpc import ServicerContext
+
 from langrocks.common.display import VirtualDisplayPool
 from langrocks.common.models.tools_pb2 import WebBrowserRequest, WebBrowserResponse
 from langrocks.common.models.tools_pb2_grpc import ToolsServicer
@@ -13,7 +14,7 @@ class ToolHandler(ToolsServicer):
         display_pool: VirtualDisplayPool = None,
         wss_secure=False,
         wss_hostname="localhost",
-        wss_port=23100,
+        wss_port=50052,
         kernel_manager=None,
     ):
         super().__init__()

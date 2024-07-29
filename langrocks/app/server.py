@@ -6,6 +6,7 @@ from concurrent import futures
 import redis
 from grpc import server as grpc_server
 from grpc_health.v1 import health, health_pb2, health_pb2_grpc
+
 from langrocks.common.display import VirtualDisplayPool
 from langrocks.common.models.tools_pb2_grpc import add_ToolsServicer_to_server
 from langrocks.tools.handler import ToolHandler
@@ -101,7 +102,7 @@ def _parse_args():
         "--wss-port",
         type=int,
         help="Port for remote browser websocket",
-        default=23100,
+        default=50052,
     )
     parser.add_argument(
         "--wss-secure",
