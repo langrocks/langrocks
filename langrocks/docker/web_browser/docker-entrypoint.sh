@@ -16,4 +16,4 @@ fi
 
 # Start langrocks server with web browser
 echo "Starting langrocks server with web browser"
-langrocks-server --with-streaming-web-browser --wss-hostname=${RUNNER_WSS_HOSTNAME:-localhost}
+langrocks-server --with-streaming-web-browser --wss-hostname=${RUNNER_WSS_HOSTNAME:-localhost} --redis-host=${RUNNER_REDIS_HOST:-localhost}
