@@ -178,6 +178,7 @@ window.addTags = () => {
           tag: tag,
           clickable: isClickable(element),
           editable: isEditable(element),
+          src: element.src || "",
         };
       })
       .filter((el) => el !== null);
@@ -191,6 +192,7 @@ window.addTags = () => {
     links: getAllElements("a"),
     labels: getAllElements("label"),
     divs: getAllElements("div"),
+    images: getAllElements("img"),
     text: text,
   };
 };
