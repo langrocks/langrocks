@@ -120,15 +120,17 @@ message WebBrowserSessionConfig {
   string init_url = 1; // url to open at the start
   string terminate_url_pattern = 2; // url pattern to terminate session
   string session_data = 3; // session data to restore  
-  int32 timeout = 4; // timeout in seconds
-  bool text_only = 5; // return text only output
-  bool html_only = 6; // return html only output
-  bool brief = 7; // brief output. Skips processing and returning individual elements
-  bool persist_session = 8; // persist session after done
-  bool capture_screenshot = 9; // capture screenshot of the session
-  bool interactive = 10; // interactive session with user inputs
-  bool record_video = 11; // record video of the session while running
-  bool skip_tags = 12; // skip annotating the page with tags before screenshot
+  int32 timeout = 4; // total session timeout in seconds
+  int32 command_timeout = 5; // command timeout in seconds
+  bool text = 6; // return text output
+  bool html = 7; // return html output  
+  bool markdown = 8; // return markdown output
+  bool persist_session = 9; // persist session after done
+  bool capture_screenshot = 10; // capture screenshot of the session
+  bool interactive = 11; // interactive session with user inputs
+  bool record_video = 12; // record video of the session while running
+  bool annotate = 13; // annoatate the page with tags before screenshot
+  repeated string tags_to_extract = 14; // list of tags to extract from the page
 }
 
 enum WebBrowserState {

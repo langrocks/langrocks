@@ -76,106 +76,118 @@ async def get_browser_content_from_page(
         content.url = page.url
         content.title = await page.title()
 
-        if session_config.skip_tags:
-            content.text = await page.evaluate("document.body.innerText")
-
-            if session_config.capture_screenshot:
-                content.screenshot = await page.screenshot(type="png")
-            return content
-
         # Load utils script
         await page.evaluate(utils_js)
 
         # Script to collect details of all elements and add bounding boxes
         # and labels
-        page_details = await page.evaluate("addTags();")
-        content.text = page_details["text"]
+        tags_to_extract = session_config.tags_to_extract or []
+        tags_to_extract_string = "[" + ",".join([f'"{tag}"' for tag in tags_to_extract]) + "]"
+        add_tags_script_string = (
+            f'window["addTags"]({tags_to_extract_string}, {"true" if session_config.annotate else "false"});'
+        )
+        page_details = await page.evaluate(add_tags_script_string)
+
+        if session_config.text:
+            content.text = page_details["text"]
+
+        if session_config.html:
+            content.html = await page.content()
 
         # Process the returned data
-        for button in page_details["buttons"]:
-            content.buttons.append(
-                WebBrowserButton(
-                    text=button["text"],
-                    selector=button["tag"],
-                ),
-            )
-
-        # Include interactable labels and divs as buttons if clickable
-        for label in page_details["labels"]:
-            content.buttons.append(
-                WebBrowserButton(
-                    text=label["text"],
-                    selector=label["tag"],
-                ),
-            )
-
-        for div in page_details["divs"]:
-            if div["clickable"]:
+        if "button" in tags_to_extract:
+            for button in page_details["buttons"]:
                 content.buttons.append(
                     WebBrowserButton(
-                        text=div["text"],
-                        selector=div["tag"],
+                        text=button["text"],
+                        selector=button["tag"],
                     ),
                 )
 
-        for input in page_details["inputs"]:
-            content.input_fields.append(
-                WebBrowserInputField(
-                    text=input["text"],
-                    selector=input["tag"],
-                ),
-            )
+        # Include interactable labels and divs as buttons if clickable
+        if "label" in tags_to_extract:
+            for label in page_details["labels"]:
+                content.buttons.append(
+                    WebBrowserButton(
+                        text=label["text"],
+                        selector=label["tag"],
+                    ),
+                )
 
-        for select in page_details["selects"]:
-            content.select_fields.append(
-                WebBrowserSelectField(
-                    text=select["text"],
-                    selector=select["tag"],
-                ),
-            )
+        if "div" in tags_to_extract:
+            for div in page_details["divs"]:
+                if div["clickable"]:
+                    content.buttons.append(
+                        WebBrowserButton(
+                            text=div["text"],
+                            selector=div["tag"],
+                        ),
+                    )
 
-        for textarea in page_details["textareas"]:
-            content.textarea_fields.append(
-                WebBrowserTextAreaField(
-                    text=textarea["text"],
-                    selector=textarea["tag"],
-                ),
-            )
+        if "input" in tags_to_extract:
+            for input in page_details["inputs"]:
+                content.input_fields.append(
+                    WebBrowserInputField(
+                        text=input["text"],
+                        selector=input["tag"],
+                    ),
+                )
 
-        # Add typable divs as textareas
-        for div in page_details["divs"]:
-            if div["editable"]:
+        if "select" in tags_to_extract:
+            for select in page_details["selects"]:
+                content.select_fields.append(
+                    WebBrowserSelectField(
+                        text=select["text"],
+                        selector=select["tag"],
+                    ),
+                )
+
+        if "textarea" in tags_to_extract:
+            for textarea in page_details["textareas"]:
                 content.textarea_fields.append(
                     WebBrowserTextAreaField(
-                        text=div["text"],
-                        selector=div["tag"],
+                        text=textarea["text"],
+                        selector=textarea["tag"],
                     ),
                 )
 
-        for link in page_details["links"]:
-            content.links.append(
-                WebBrowserLink(
-                    text=link["text"],
-                    selector=link["tag"],
-                    url=link["url"],
-                ),
-            )
+        # Add typable divs as textareas
+        if "div" in tags_to_extract:
+            for div in page_details["divs"]:
+                if div["editable"]:
+                    content.textarea_fields.append(
+                        WebBrowserTextAreaField(
+                            text=div["text"],
+                            selector=div["tag"],
+                        ),
+                    )
 
-        for image in page_details["images"]:
-            content.images.append(
-                WebBrowserImage(
-                    text=image["text"],
-                    selector=image["tag"],
-                    src=image["src"],
-                ),
-            )
+        if "a" in tags_to_extract:
+            for link in page_details["links"]:
+                content.links.append(
+                    WebBrowserLink(
+                        text=link["text"],
+                        selector=link["tag"],
+                        url=link["url"],
+                    ),
+                )
+
+        if "img" in tags_to_extract:
+            for image in page_details["images"]:
+                content.images.append(
+                    WebBrowserImage(
+                        text=image["text"],
+                        selector=image["tag"],
+                        src=image["src"],
+                    ),
+                )
 
         # Add a screenshot
         if session_config.capture_screenshot:
             content.screenshot = await page.screenshot(type="png")
 
         # Clear tags
-        await page.evaluate("clearTags();")
+        await page.evaluate('window["clearTags"]();')
     except Exception as e:
         logger.error(e)
 
