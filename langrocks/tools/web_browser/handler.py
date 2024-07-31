@@ -64,7 +64,9 @@ Object.defineProperty(Object.getPrototypeOf(navigator), 'webdriver', {
 logger = logging.getLogger(__name__)
 
 
-async def get_browser_content_from_page(page: Page, utils_js: str, skip_tags: bool = False) -> WebBrowserContent:
+async def get_browser_content_from_page(
+    page: Page, utils_js: str, session_config: WebBrowserSessionConfig
+) -> WebBrowserContent:
     """
     Get browser content from a page
     """
@@ -74,9 +76,11 @@ async def get_browser_content_from_page(page: Page, utils_js: str, skip_tags: bo
         content.url = page.url
         content.title = await page.title()
 
-        if skip_tags:
+        if session_config.skip_tags:
             content.text = await page.evaluate("document.body.innerText")
-            content.screenshot = await page.screenshot(type="png")
+
+            if session_config.capture_screenshot:
+                content.screenshot = await page.screenshot(type="png")
             return content
 
         # Load utils script
@@ -167,7 +171,8 @@ async def get_browser_content_from_page(page: Page, utils_js: str, skip_tags: bo
             )
 
         # Add a screenshot
-        content.screenshot = await page.screenshot(type="png")
+        if session_config.capture_screenshot:
+            content.screenshot = await page.screenshot(type="png")
 
         # Clear tags
         await page.evaluate("clearTags();")
@@ -271,7 +276,7 @@ async def process_web_browser_request(
         finally:
             pass
 
-    content = await get_browser_content_from_page(page, utils_js, session_config.skip_tags)
+    content = await get_browser_content_from_page(page, utils_js, session_config)
     for error in errors:
         content.command_errors.append(error)
 
@@ -396,6 +401,8 @@ class WebBrowserHandler:
                 ),
                 state=WebBrowserState.RUNNING,
             )
+        else:
+            yield WebBrowserResponse(state=WebBrowserState.RUNNING)
 
         # Use ThreadPoolExecutor to run the async function in a separate thread
         with futures.ThreadPoolExecutor(thread_name_prefix="async_tasks") as executor:
@@ -432,8 +439,6 @@ class WebBrowserHandler:
 
             # Wait for the future to complete and get the return value
             try:
-                yield WebBrowserResponse(state=WebBrowserState.RUNNING)
-
                 while not browser_done:
                     try:
                         element = content_queue.get_nowait()
