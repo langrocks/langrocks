@@ -315,7 +315,7 @@ class WebBrowserHandler:
                 page = await context.new_page()
 
                 url = session_config.init_url or "chrome://newtab"
-                if not url.startswith("http"):
+                if not url.startswith("http") and not url.startswith("chrome://"):
                     url = f"https://{url}"
 
                 # Load the start_url before processing the steps
