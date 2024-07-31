@@ -3,11 +3,11 @@ import json
 import logging
 import os
 import random
-import re
 from concurrent import futures
 from typing import Iterator
 
-from grpc import ServicerContext
+from playwright.async_api import Page, async_playwright
+
 from langrocks.common.models.tools_pb2 import (
     CLICK,
     COPY,
@@ -32,7 +32,6 @@ from langrocks.common.models.tools_pb2 import (
     WebBrowserState,
     WebBrowserTextAreaField,
 )
-from playwright.async_api import Page, TimeoutError, async_playwright
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
@@ -315,21 +314,13 @@ class WebBrowserHandler:
                 await context.add_init_script(BROWSER_INIT_SCRIPT)
                 page = await context.new_page()
 
-                url = session_config.init_url
-                # skip_tags = session_config.skip_tags
+                url = session_config.init_url or "chrome://newtab"
                 if not url.startswith("http"):
                     url = f"https://{url}"
 
                 # Load the start_url before processing the steps
                 await page.goto(url, wait_until="domcontentloaded")
 
-                # outputs, errors = await self.process_web_browser_request(
-                #     page,
-                #     initial_request,
-                # )
-                # content = await self.get_browser_content_from_page(page, self.utils_js, skip_tags)
-                # if len(errors) > 0:
-                #     content.error = error
                 output, terminated = await process_web_browser_request(
                     page, self.utils_js, session_config, initial_request
                 )
@@ -340,18 +331,7 @@ class WebBrowserHandler:
                 else:
                     yield output, terminated, None
 
-                # yield (outputs, content)
-
                 for next_request in request_iterator:
-                    # output, error = await self.process_web_browser_request(page, next_request)
-                    # outputs += output
-
-                    # # Populate content from the last page
-                    # content = await self.get_browser_content_from_page(page, self.utils_js, skip_tags)
-                    # if error:
-                    #     content.error = error
-
-                    # yield (outputs, content)
                     output, terminated = await process_web_browser_request(
                         page, self.utils_js, session_config, next_request
                     )
