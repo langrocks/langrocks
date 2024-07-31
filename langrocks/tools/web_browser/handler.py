@@ -21,9 +21,10 @@ from langrocks.common.models.tools_pb2 import (
     WebBrowserButton,
     WebBrowserCommandError,
     WebBrowserCommandOutput,
+    WebBrowserContent,
+    WebBrowserImage,
     WebBrowserInputField,
     WebBrowserLink,
-    WebBrowserOutput,
     WebBrowserRequest,
     WebBrowserResponse,
     WebBrowserSelectField,
@@ -63,20 +64,20 @@ Object.defineProperty(Object.getPrototypeOf(navigator), 'webdriver', {
 logger = logging.getLogger(__name__)
 
 
-async def get_browser_output_from_page(page: Page, utils_js: str, skip_tags: bool = False) -> WebBrowserOutput:
+async def get_browser_content_from_page(page: Page, utils_js: str, skip_tags: bool = False) -> WebBrowserContent:
     """
-    Get browser output from a page
+    Get browser content from a page
     """
-    output = WebBrowserOutput()
+    content = WebBrowserContent()
 
     try:
-        output.url = page.url
-        output.title = await page.title()
+        content.url = page.url
+        content.title = await page.title()
 
         if skip_tags:
-            output.text = await page.evaluate("document.body.innerText")
-            output.screenshot = await page.screenshot(type="png")
-            return output
+            content.text = await page.evaluate("document.body.innerText")
+            content.screenshot = await page.screenshot(type="png")
+            return content
 
         # Load utils script
         await page.evaluate(utils_js)
@@ -84,11 +85,11 @@ async def get_browser_output_from_page(page: Page, utils_js: str, skip_tags: boo
         # Script to collect details of all elements and add bounding boxes
         # and labels
         page_details = await page.evaluate("addTags();")
-        output.text = page_details["text"]
+        content.text = page_details["text"]
 
         # Process the returned data
         for button in page_details["buttons"]:
-            output.buttons.append(
+            content.buttons.append(
                 WebBrowserButton(
                     text=button["text"],
                     selector=button["tag"],
@@ -97,7 +98,7 @@ async def get_browser_output_from_page(page: Page, utils_js: str, skip_tags: boo
 
         # Include interactable labels and divs as buttons if clickable
         for label in page_details["labels"]:
-            output.buttons.append(
+            content.buttons.append(
                 WebBrowserButton(
                     text=label["text"],
                     selector=label["tag"],
@@ -106,7 +107,7 @@ async def get_browser_output_from_page(page: Page, utils_js: str, skip_tags: boo
 
         for div in page_details["divs"]:
             if div["clickable"]:
-                output.buttons.append(
+                content.buttons.append(
                     WebBrowserButton(
                         text=div["text"],
                         selector=div["tag"],
@@ -114,7 +115,7 @@ async def get_browser_output_from_page(page: Page, utils_js: str, skip_tags: boo
                 )
 
         for input in page_details["inputs"]:
-            output.inputs.append(
+            content.input_fields.append(
                 WebBrowserInputField(
                     text=input["text"],
                     selector=input["tag"],
@@ -122,7 +123,7 @@ async def get_browser_output_from_page(page: Page, utils_js: str, skip_tags: boo
             )
 
         for select in page_details["selects"]:
-            output.selects.append(
+            content.select_fields.append(
                 WebBrowserSelectField(
                     text=select["text"],
                     selector=select["tag"],
@@ -130,7 +131,7 @@ async def get_browser_output_from_page(page: Page, utils_js: str, skip_tags: boo
             )
 
         for textarea in page_details["textareas"]:
-            output.textareas.append(
+            content.textarea_fields.append(
                 WebBrowserTextAreaField(
                     text=textarea["text"],
                     selector=textarea["tag"],
@@ -140,7 +141,7 @@ async def get_browser_output_from_page(page: Page, utils_js: str, skip_tags: boo
         # Add typable divs as textareas
         for div in page_details["divs"]:
             if div["editable"]:
-                output.textareas.append(
+                content.textarea_fields.append(
                     WebBrowserTextAreaField(
                         text=div["text"],
                         selector=div["tag"],
@@ -148,7 +149,7 @@ async def get_browser_output_from_page(page: Page, utils_js: str, skip_tags: boo
                 )
 
         for link in page_details["links"]:
-            output.links.append(
+            content.links.append(
                 WebBrowserLink(
                     text=link["text"],
                     selector=link["tag"],
@@ -156,16 +157,24 @@ async def get_browser_output_from_page(page: Page, utils_js: str, skip_tags: boo
                 ),
             )
 
+        for image in page_details["images"]:
+            content.images.append(
+                WebBrowserImage(
+                    text=image["text"],
+                    selector=image["tag"],
+                    src=image["src"],
+                ),
+            )
+
         # Add a screenshot
-        output.screenshot = await page.screenshot(type="png")
+        content.screenshot = await page.screenshot(type="png")
 
         # Clear tags
         await page.evaluate("clearTags();")
     except Exception as e:
         logger.error(e)
-        output.error = str(e)
 
-    return output
+    return content
 
 
 async def process_web_browser_request(
@@ -204,7 +213,7 @@ async def process_web_browser_request(
             return page.locator(name).nth(int(value))
         return page.locator(selector)
 
-    steps = list(request.inputs)
+    steps = list(request.commands)
     outputs = []
     errors = []
     logger.info(steps)
@@ -262,14 +271,14 @@ async def process_web_browser_request(
         finally:
             pass
 
-    output = await get_browser_output_from_page(page, utils_js, session_config.skip_tags)
+    content = await get_browser_content_from_page(page, utils_js, session_config.skip_tags)
     for error in errors:
-        output.errors.append(error)
+        content.command_errors.append(error)
 
     for text_output in outputs:
-        output.outputs.append(text_output)
+        content.command_outputs.append(text_output)
 
-    return output, terminated
+    return content, terminated
 
 
 class WebBrowserHandler:
@@ -321,25 +330,25 @@ class WebBrowserHandler:
                 # Load the start_url before processing the steps
                 await page.goto(url, wait_until="domcontentloaded")
 
-                output, terminated = await process_web_browser_request(
+                content, terminated = await process_web_browser_request(
                     page, self.utils_js, session_config, initial_request
                 )
 
                 if terminated and session_config.persist_session:
                     session_data = await context.storage_state()
-                    yield (output, terminated, session_data)
+                    yield (content, terminated, session_data)
                 else:
-                    yield output, terminated, None
+                    yield content, terminated, None
 
                 for next_request in request_iterator:
-                    output, terminated = await process_web_browser_request(
+                    content, terminated = await process_web_browser_request(
                         page, self.utils_js, session_config, next_request
                     )
                     if session_config.persist_session:
                         session_data = await context.storage_state()
-                        yield (output, terminated, session_data)
+                        yield (content, terminated, session_data)
                     else:
-                        yield output, terminated, None
+                        yield content, terminated, None
 
                     await asyncio.sleep(0.1)
 
@@ -399,20 +408,20 @@ class WebBrowserHandler:
 
                 return loop.run_until_complete(fn())
 
-            # Create a queue to store the browser output
-            output_queue = asyncio.Queue()
+            # Create a queue to store the browser content
+            content_queue = asyncio.Queue()
 
             async def collect_browser_output():
-                async for output, terminated, session_data in self._process_web_browser_input_stream(
+                async for content, terminated, session_data in self._process_web_browser_input_stream(
                     initial_request=initial_request,
                     request_iterator=request_iterator,
                     display=display,
                 ):
-                    await output_queue.put((output, terminated, session_data))
+                    await content_queue.put((content, terminated, session_data))
 
                     if terminated:
                         break
-                await output_queue.put(SENTINAL)
+                await content_queue.put(SENTINAL)
 
             # Submit the function to the executor and get a Future object
             content_future = executor.submit(
@@ -427,19 +436,19 @@ class WebBrowserHandler:
 
                 while not browser_done:
                     try:
-                        element = output_queue.get_nowait()
+                        element = content_queue.get_nowait()
                         if element is SENTINAL:
                             browser_done = True
                             break
 
-                        output, terminated, session_data = element
+                        content, terminated, session_data = element
 
                         logger.info(f"Sending output: {terminated}, {session_data}")
 
                         response = WebBrowserResponse(
                             state=WebBrowserState.RUNNING if not terminated else WebBrowserState.TERMINATED,
                         )
-                        response.output.CopyFrom(output)
+                        response.content.CopyFrom(content)
                         if session_data:
                             response.session.CopyFrom(WebBrowserSession(session_data=json.dumps(session_data)))
 

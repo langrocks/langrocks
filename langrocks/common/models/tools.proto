@@ -62,7 +62,7 @@ message WebBrowserCommandError {
   string error = 2; // error of command
 }
 
-message WebBrowserInput {
+message WebBrowserCommand {
   WebBrowserCommandType type = 1; // command type
   string selector = 2; // selector to use
   string data = 3; // command data
@@ -94,19 +94,26 @@ message WebBrowserLink {
   string url = 3; // url of link
 }
 
-message WebBrowserOutput {
+message WebBrowserImage {
+  string selector = 1; // selector of image  
+  string text = 2; // alt text of image
+  string src = 3; // src of image
+}
+
+message WebBrowserContent {
   string url = 1; // url of page
   string title = 2; // title of page
   string html = 3; // html of page
   string text = 4; // text of page
   bytes screenshot = 5; // screenshot of page if available
   repeated WebBrowserButton buttons = 6; // buttons on page
-  repeated WebBrowserInputField inputs = 7; // inputs on page
-  repeated WebBrowserSelectField selects = 8; // selects on page
-  repeated WebBrowserTextAreaField textareas = 9; // textareas on page
-  repeated WebBrowserLink links = 10; // links on page
-  repeated WebBrowserCommandOutput outputs = 11; // outputs of commands
-  repeated WebBrowserCommandError errors = 12; // errors of commands
+  repeated WebBrowserLink links = 7; // links on page
+  repeated WebBrowserImage images = 8; // images on page
+  repeated WebBrowserInputField input_fields = 9; // inputs on page
+  repeated WebBrowserSelectField select_fields = 10; // selects on page
+  repeated WebBrowserTextAreaField textarea_fields = 11; // textareas on page  
+  repeated WebBrowserCommandOutput command_outputs = 12; // outputs of commands
+  repeated WebBrowserCommandError command_errors = 13; // errors of commands
 }
 
 message WebBrowserSessionConfig {
@@ -138,13 +145,13 @@ message WebBrowserSession {
 
 message WebBrowserRequest {
   WebBrowserSessionConfig session_config = 1; // session configuation
-  repeated WebBrowserInput inputs = 2; // inputs to send to the browser
+  repeated WebBrowserCommand commands = 2; // commands to send to the browser
 }
 
 message WebBrowserResponse {
   WebBrowserSession session = 1; // session data
   WebBrowserState state = 2; // state of browser
-  WebBrowserOutput output = 3; // output from the browser after running inputs
+  WebBrowserContent content = 3; // content from the browser after running inputs
 }
 
 service Tools {
