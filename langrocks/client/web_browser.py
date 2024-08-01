@@ -134,14 +134,18 @@ def convert_web_browser_session_config_to_proto(
 ) -> tools_pb2.WebBrowserSessionConfig:
     return tools_pb2.WebBrowserSessionConfig(
         init_url=config.init_url,
-        text=config.text,
-        html=config.html,
-        markdown=config.markdown,
-        interactive=config.interactive,
-        tags_to_extract=config.tags_to_extract,
         terminate_url_pattern=config.terminate_url_pattern,
         session_data=config.session_data,
         timeout=config.timeout,
+        command_timeout=config.command_timeout,
+        text=config.text,
+        html=config.html,
+        markdown=config.markdown,
+        persist_session=config.persist_session,
+        capture_screenshot=config.capture_screenshot,
+        interactive=config.interactive,
+        annotate=config.annotate,
+        tags_to_extract=config.tags_to_extract,
     )
 
 
