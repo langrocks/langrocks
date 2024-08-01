@@ -7,7 +7,8 @@ license = "MIT"
 readme = "README.md"
 packages = [
     {include = "langrocks/app/server.py"},
-    {include = "langrocks/common/"}
+    {include = "langrocks/common/"},
+    {include = "langrocks/client/"}
 ]
 
 [tool.poetry.scripts]
@@ -15,6 +16,7 @@ langrocks-server = "langrocks.app.server:main"
 
 [tool.poetry.dependencies]
 python = ">=3.10"
+pydantic = "^2.8.2"
 
 
 [tool.poetry.group.web_browser.dependencies]
