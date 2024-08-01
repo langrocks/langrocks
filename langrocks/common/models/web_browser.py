@@ -31,8 +31,8 @@ class WebBrowserCommandError(BaseModel):
 
 class WebBrowserCommand(BaseModel):
     command_type: WebBrowserCommandType
-    selector: str = None
-    data: str = None
+    selector: Optional[str] = None
+    data: str = ""
 
 
 class WebBrowserElement(BaseModel):
