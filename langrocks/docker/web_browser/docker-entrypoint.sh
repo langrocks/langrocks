@@ -13,4 +13,17 @@ if [ "x$ENABLE_PLAYWRIGHT_WS" != 'xoff' ]; then
     playwright run-server --port ${PLAYWRIGHT_WS_PORT:-50053} &
 fi
 
-exec "$@"
+WSS_SECURE_FLAG="--no-wss-secure"
+if [ "$RUNNER_WSS_SECURE" = "true" ]; then
+  WSS_SECURE_FLAG="--wss-secure"
+fi
+
+exec langrocks-server \
+  --with-streaming-web-browser \
+  --wss-hostname="${RUNNER_WSS_HOSTNAME:-localhost}" \
+  --redis-host="${RUNNER_REDIS_HOST:-localhost}" \
+  --redis-port="${RUNNER_REDIS_PORT:-6379}" \
+  --redis-db="${RUNNER_REDIS_DB:-0}" \
+  --wss-port="${RUNNER_WSS_PORT:-50052}" \
+  --port="${RUNNER_PORT:-50051}" \
+  $WSS_SECURE_FLAG

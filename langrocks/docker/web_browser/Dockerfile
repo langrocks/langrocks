@@ -50,4 +50,4 @@ RUN wget -qO/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-pro
 
 ENTRYPOINT [ "/code/langrocks/docker/web_browser/docker-entrypoint.sh" ]
 
-CMD [ "langrocks-server", "--with-streaming-web-browser", "--wss-hostname=${RUNNER_WSS_HOSTNAME:-localhost}", "--redis-host=${RUNNER_REDIS_HOST:-localhost}", "--redis-port=${RUNNER_REDIS_PORT:-6379}", "--redis-db=${RUNNER_REDIS_DB:-0}", "--wss-port=${RUNNER_WSS_PORT:-50052}", "--port=${RUNNER_PORT:-50051}", "$(if [ \"$RUNNER_WSS_SECURE\" = \"true\" ]; then echo \"--wss-secure\"; else echo \"--no-wss-secure\"; fi)" ]
+CMD [ "/code/langrocks/docker/web_browser/docker-entrypoint.sh" ]
