@@ -41,11 +41,13 @@ WORKDIR /code
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi
 
-COPY langrocks/docker/web_browser/docker-entrypoint.sh /code/docker-entrypoint.sh
-RUN chmod +x /code/docker-entrypoint.sh
+COPY langrocks/docker/web_browser/docker-entrypoint.sh /code/langrocks/docker/web_browser/docker-entrypoint.sh
+RUN chmod +x /code/langrocks/docker/web_browser/docker-entrypoint.sh
 
 # Install grpc_health_probe
 RUN wget -qO/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.28/grpc_health_probe-linux-amd64 && \
     chmod +x /grpc_health_probe
 
-ENTRYPOINT [ "/code/docker-entrypoint.sh" ]
+ENTRYPOINT [ "/code/langrocks/docker/web_browser/docker-entrypoint.sh" ]
+
+CMD [ "langrocks-server", "--with-streaming-web-browser", "--wss-hostname=${RUNNER_WSS_HOSTNAME:-localhost}", "--redis-host=${RUNNER_REDIS_HOST:-localhost}", "--redis-port=${RUNNER_REDIS_PORT:-6379}", "--redis-db=${RUNNER_REDIS_DB:-0}", "--wss-port=${RUNNER_WSS_PORT:-50052}", "--port=${RUNNER_PORT:-50051}", "$(if [ \"$RUNNER_WSS_SECURE\" = \"true\" ]; then echo \"--wss-secure\"; else echo \"--no-wss-secure\"; fi)" ]
