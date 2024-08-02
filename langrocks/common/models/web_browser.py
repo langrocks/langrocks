@@ -1,3 +1,4 @@
+import base64
 from enum import Enum
 from typing import List, Optional
 
@@ -65,19 +66,24 @@ class WebBrowserImage(WebBrowserElement):
 
 
 class WebBrowserContent(BaseModel):
-    url: str
-    title: str
-    html: Optional[str]
-    text: Optional[str]
-    screenshot: Optional[bytes]
-    buttons: Optional[List[WebBrowserButton]]
-    input_fields: Optional[List[WebBrowserInputField]]
-    select_fields: Optional[List[WebBrowserSelectField]]
-    textarea_fields: Optional[List[WebBrowserTextAreaField]]
-    links: Optional[List[WebBrowserLink]]
-    images: Optional[List[WebBrowserImage]]
-    command_outputs: Optional[List[WebBrowserCommandOutput]]
-    command_errors: Optional[List[WebBrowserCommandError]]
+    url: str = ""
+    title: str = ""
+    html: Optional[str] = None
+    text: Optional[str] = None
+    screenshot: Optional[bytes] = None
+    buttons: Optional[List[WebBrowserButton]] = None
+    input_fields: Optional[List[WebBrowserInputField]] = None
+    select_fields: Optional[List[WebBrowserSelectField]] = None
+    textarea_fields: Optional[List[WebBrowserTextAreaField]] = None
+    links: Optional[List[WebBrowserLink]] = None
+    images: Optional[List[WebBrowserImage]] = None
+    command_outputs: Optional[List[WebBrowserCommandOutput]] = None
+    command_errors: Optional[List[WebBrowserCommandError]] = None
+
+    class Config:
+        json_encoders = {
+            bytes: lambda v: base64.b64encode(v),
+        }
 
 
 class WebBrowserSessionConfig(BaseModel):
@@ -107,6 +113,11 @@ class WebBrowserSession(BaseModel):
     ws_url: Optional[str] = None
     session_data: Optional[str] = None
     video: Optional[bytes] = None
+
+    class Config:
+        json_encoders = {
+            bytes: lambda v: base64.b64encode(v),
+        }
 
 
 class WebBrowserRequest(BaseModel):
