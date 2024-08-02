@@ -1,4 +1,7 @@
+import base64
 import logging
+import threading
+from queue import Queue
 from typing import Iterator, List, Optional
 
 import grpc
@@ -36,6 +39,19 @@ def convert_proto_web_browser_state(
         return WebBrowserState.TIMEOUT
     else:
         return WebBrowserState.RUNNING
+
+
+def convert_web_browser_state_to_proto(
+    state: WebBrowserState,
+) -> tools_pb2.WebBrowserState:
+    if state == WebBrowserState.RUNNING:
+        return tools_pb2.WebBrowserState.RUNNING
+    elif state == WebBrowserState.TERMINATED:
+        return tools_pb2.WebBrowserState.TERMINATED
+    elif state == WebBrowserState.TIMEOUT:
+        return tools_pb2.WebBrowserState.TIMEOUT
+    else:
+        return tools_pb2.WebBrowserState.RUNNING
 
 
 def convert_web_browser_command_to_proto(
@@ -334,3 +350,330 @@ class WebBrowserContextManager:
         Get the textarea fields from a page.
         """
         return self.get_elements_from_page(url, ["textarea"]).textarea_fields
+
+
+class WebBrowser:
+    def __init__(
+        self,
+        url: str = "",
+        base_url: str = "",
+        path: str = "",
+        session_data: str = None,
+        text: bool = True,
+        html: bool = False,
+        markdown: bool = False,
+        persist_session: bool = False,
+        capture_screenshot: bool = False,
+        interactive: bool = True,
+        annotate: bool = False,
+        tags_to_extract: List[str] = [],
+    ):
+        self.SENTINAL = object()  # Used to signal the end of the queue
+        self.session_data = session_data
+        self.text = text
+        self.html = html
+        self.markdown = markdown
+        self.persist_session = persist_session
+        self.capture_screenshot = capture_screenshot
+        self.interactive = interactive
+        self.annotate = annotate
+        self.tags_to_extract = tags_to_extract
+
+        self._channel = grpc.insecure_channel(
+            url if url else f"{base_url}/{path}",
+        )
+        self._stub = ToolsStub(self._channel)
+        self._output_session_data = None
+        self._wss_url = None
+        self._state = None
+        self._commands_queue = Queue()  # Queue containing list of commands
+        self._content_queue = Queue()  # Queue with resulting content from running each set of commands
+        self._commands_cv = threading.Condition()
+        self._content_cv = threading.Condition()
+        self._last_content = None
+
+    def __enter__(self):
+        self._response_thread = threading.Thread(target=self._response_iterator)
+        self._response_thread.start()
+
+        # Pull the first response from the content queue
+        with self._content_cv:
+            while self._content_queue.empty():
+                self._content_cv.wait()
+            self._content_queue.get()
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # If the session is still running, terminate it
+        if self._state == WebBrowserState.RUNNING:
+            self.terminate()
+
+        self._response_thread.join()
+        self._channel.close()
+
+    def _request_iterator(self):
+        # Send the session config before any commands
+        yield tools_pb2.WebBrowserRequest(
+            session_config=tools_pb2.WebBrowserSessionConfig(
+                session_data=self.session_data,
+                text=self.text,
+                html=self.html,
+                markdown=self.markdown,
+                persist_session=self.persist_session,
+                capture_screenshot=self.capture_screenshot,
+                interactive=self.interactive,
+                annotate=self.annotate,
+                tags_to_extract=self.tags_to_extract,
+            ),
+        )
+        with self._commands_cv:
+            # Wait for the first set of commands
+            while self._commands_queue.empty():
+                self._commands_cv.wait()
+
+            while not self._commands_queue.empty():
+                commands = self._commands_queue.get()
+                if commands is self.SENTINAL:
+                    break
+
+                yield tools_pb2.WebBrowserRequest(
+                    commands=[convert_web_browser_command_to_proto(command) for command in commands],
+                )
+
+                # Wait for the next set of commands
+                while self._commands_queue.empty():
+                    self._commands_cv.wait()
+
+    def _response_iterator(self):
+        try:
+            for response in self._stub.GetWebBrowser(self._request_iterator()):
+                if response.HasField("session"):
+                    self._output_session_data = response.session.session_data
+                    self._wss_url = response.session.ws_url
+                if response.HasField("content"):
+                    self._last_content = convert_proto_to_web_browser_content(response.content)
+                    self._content_queue.put(self._last_content)
+                if convert_web_browser_state_to_proto(response.state) is not self._state:
+                    self._state = convert_proto_web_browser_state(response.state)
+
+                    # If the session is terminated, add a SENTINAL to the queue to signal the end
+                    if self._state == WebBrowserState.TERMINATED:
+                        self._commands_queue.put(self.SENTINAL)
+                        self._content_queue.put(None)
+
+                with self._content_cv:
+                    self._content_cv.notify_all()
+        except Exception as e:
+            logger.error(f"Error in response iterator: {e}")
+            self._state = WebBrowserState.TERMINATED
+
+    def get_state(self) -> WebBrowserState:
+        """
+        Get the state of the web browser.
+        """
+        return self._state
+
+    def get_session_data(self) -> str:
+        """
+        Get the session data of the web browser.
+        """
+        return self._output_session_data
+
+    def get_wss_url(self) -> str:
+        """
+        Get the WebSocket URL of the web browser for interactive sessions.
+        """
+        return self._wss_url
+
+    def run_commands(
+        self,
+        commands: List[WebBrowserCommand],
+    ) -> WebBrowserContent:
+        """
+        Run the web browser commands and returns the content.
+        """
+        self._commands_queue.put(commands)
+        with self._commands_cv:
+            self._commands_cv.notify_all()
+
+        with self._content_cv:
+            while self._content_queue.empty():
+                self._content_cv.wait()
+            return self._content_queue.get()
+
+    def run_command(
+        self,
+        command: WebBrowserCommand,
+    ) -> WebBrowserContent:
+        """
+        Run the web browser command and returns the content.
+        """
+        return self.run_commands(
+            commands=[command],
+        )
+
+    def terminate(self):
+        """
+        Terminate the web browser and returns the session data.
+        """
+        # Send a terminate command
+        self.run_command(
+            command=WebBrowserCommand(
+                command_type=WebBrowserCommandType.TERMINATE,
+            ),
+        )
+
+        return self.get_session_data()
+
+    # Helper functions
+    def goto(self, url: str) -> WebBrowserContent:
+        """
+        Navigate to a URL.
+        """
+        return self.run_command(
+            command=WebBrowserCommand(
+                command_type=WebBrowserCommandType.GOTO,
+                data=url,
+            ),
+        )
+
+    def wait(self, selector: str) -> WebBrowserContent:
+        """
+        Wait for an element to appear.
+        """
+        return self.run_command(
+            command=WebBrowserCommand(
+                command_type=WebBrowserCommandType.WAIT,
+                selector=selector,
+            ),
+        )
+
+    def click(self, selector: str) -> WebBrowserContent:
+        """
+        Click on an element.
+        """
+        return self.run_command(
+            command=WebBrowserCommand(
+                command_type=WebBrowserCommandType.CLICK,
+                selector=selector,
+            ),
+        )
+
+    def type(self, selector: str, text: str) -> WebBrowserContent:
+        """
+        Type text into an input field.
+        """
+        return self.run_command(
+            command=WebBrowserCommand(
+                command_type=WebBrowserCommandType.TYPE,
+                selector=selector,
+                data=text,
+            ),
+        )
+
+    def get_html(self) -> str:
+        """
+        Get the HTML content of the page.
+        """
+        if self._last_content:
+            return self._last_content.html
+
+        # Run a WAIT command and return the HTML content
+        return self.wait("body").html
+
+    def get_text(self) -> str:
+        """
+        Get the text content of the page.
+        """
+        if self._last_content:
+            return self._last_content.text
+
+        # Run a WAIT command and return the text content
+        return self.wait("body").text
+
+    def get_markdown(self) -> str:
+        """
+        Get the markdown content of the page.
+        """
+        if self._last_content:
+            return self._last_content.markdown
+
+        # Run a WAIT command and return the markdown content
+        return self.wait("body").markdown
+
+    def get_images(self) -> List[WebBrowserImage]:
+        """
+        Get the images from the page.
+        """
+        if self._last_content:
+            return self._last_content.images
+
+        # Run a WAIT command and return the images
+        return self.wait("body").images
+
+    def get_links(self) -> List[WebBrowserLink]:
+        """
+        Get the links from the page.
+        """
+        if self._last_content:
+            return self._last_content.links
+
+        # Run a WAIT command and return the links
+        return self.wait("body").links
+
+    def get_buttons(self) -> List[WebBrowserButton]:
+        """
+        Get the buttons from the page.
+        """
+        if self._last_content:
+            return self._last_content.buttons
+
+        # Run a WAIT command and return the buttons
+        return self.wait("body").buttons
+
+    def get_input_fields(self) -> List[WebBrowserInputField]:
+        """
+        Get the input fields from the page.
+        """
+        if self._last_content:
+            return self._last_content.input_fields
+
+        # Run a WAIT command and return the input fields
+        return self.wait("body").input_fields
+
+    def get_select_fields(self) -> List[WebBrowserSelectField]:
+        """
+        Get the select fields from the page.
+        """
+        if self._last_content:
+            return self._last_content.select_fields
+
+        # Run a WAIT command and return the select fields
+        return self.wait("body").select_fields
+
+    def get_textarea_fields(self) -> List[WebBrowserTextAreaField]:
+        """
+        Get the textarea fields from the page.
+        """
+        if self._last_content:
+            return self._last_content.textarea_fields
+
+        # Run a WAIT command and return the textarea fields
+        return self.wait("body").textarea_fields
+
+    def get_screenshot(self) -> str:
+        """
+        Get a screenshot of the page as a data URL.
+        """
+        screenshot = None
+        if self._last_content:
+            screenshot = self._last_content.screenshot
+
+        # Run a WAIT command and return the screenshot
+        screenshot = self.wait("body").screenshot
+
+        if screenshot:
+            return f"data:image/png;base64,{base64.b64encode(screenshot).decode()}"
+
+        return ""

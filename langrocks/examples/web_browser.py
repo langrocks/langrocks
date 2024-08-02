@@ -1,5 +1,79 @@
-from langrocks.client.web_browser import WebBrowserContextManager
+from langrocks.client.web_browser import WebBrowser, WebBrowserContextManager
 from langrocks.common.models.web_browser import WebBrowserCommand, WebBrowserCommandType
+
+# Test the web browser
+with WebBrowser(
+    "localhost:50051", capture_screenshot=True, html=True, persist_session=True, tags_to_extract=["img"]
+) as web_browser:
+    print("\nRunning web browser")
+
+    print("Browser state", web_browser.get_state())
+
+    ws_url = web_browser.get_wss_url()
+    print("WSS_URL", ws_url)
+
+    # Run commands
+    print("Running commands")
+    content = web_browser.run_commands(
+        commands=[
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.GOTO,
+                data="https://www.google.com",
+            ),
+        ]
+    )
+    print("Output from running commands", content.model_dump_json()[:100])
+
+    # Run command
+    print("Running command")
+    content = web_browser.run_command(
+        command=WebBrowserCommand(
+            command_type=WebBrowserCommandType.WAIT,
+            selector="body",
+        )
+    )
+    print("Output from running command", content.model_dump_json()[:100])
+
+    # Get text from session
+    print("Getting text from session")
+    print("Text", web_browser.get_text()[:100])
+
+    # Get HTML from session
+    print("Getting HTML from session")
+    print("HTML", web_browser.get_html()[:100])
+
+    # Get images from session
+    print("Getting images from session")
+    print("Images", web_browser.get_images()[:3])
+
+    # Get links from session
+    print("Getting links from session")
+    print("Links", web_browser.get_links()[:3])
+
+    # Get buttons from session
+    print("Getting buttons from session")
+    print("Buttons", web_browser.get_buttons())
+
+    # Get input fields from session
+    print("Getting input fields from session")
+    print("Input fields", web_browser.get_input_fields())
+
+    # Get select fields from session
+    print("Getting select fields from session")
+    print("Select fields", web_browser.get_select_fields())
+
+    # Get textarea fields from session
+    print("Getting textarea fields from session")
+    print("Textarea fields", web_browser.get_textarea_fields())
+
+    # Get screenshot
+    print("Getting screenshot")
+    print("Screenshot", web_browser.get_screenshot()[:100])
+
+    print("Terminating web browser")
+    session = web_browser.terminate()
+    print("Session data", session[:100])
+
 
 # Test the interactive web browser
 with WebBrowserContextManager("localhost:50051") as web_browser:
