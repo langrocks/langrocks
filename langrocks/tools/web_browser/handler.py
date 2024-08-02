@@ -288,6 +288,10 @@ async def process_web_browser_request(
         finally:
             pass
 
+    # If there was only TERMINATE command, then skip getting the content
+    if not steps or (len(steps) == 1 and steps[0].type == TERMINATE):
+        return WebBrowserContent(), terminated
+
     content = await get_browser_content_from_page(page, utils_js, session_config)
     for error in errors:
         content.command_errors.append(error)
@@ -353,18 +357,24 @@ class WebBrowserHandler:
 
                 if terminated and session_config.persist_session:
                     session_data = await context.storage_state()
+                    await browser.close()
                     yield (content, terminated, session_data)
                 else:
+                    if terminated:
+                        await browser.close()
                     yield content, terminated, None
 
                 for next_request in request_iterator:
                     content, terminated = await process_web_browser_request(
                         page, self.utils_js, session_config, next_request
                     )
-                    if session_config.persist_session:
+                    if terminated and session_config.persist_session:
                         session_data = await context.storage_state()
+                        await browser.close()
                         yield (content, terminated, session_data)
                     else:
+                        if terminated:
+                            await browser.close()
                         yield content, terminated, None
 
                     await asyncio.sleep(0.1)
@@ -460,8 +470,6 @@ class WebBrowserHandler:
 
                         content, terminated, session_data = element
 
-                        logger.info(f"Sending output: {terminated}, {session_data}")
-
                         response = WebBrowserResponse(
                             state=WebBrowserState.RUNNING if not terminated else WebBrowserState.TERMINATED,
                         )
@@ -473,7 +481,7 @@ class WebBrowserHandler:
                     except asyncio.QueueEmpty:
                         pass
 
-                    if content_future.done() or browser_done:
+                    if browser_done:
                         break
 
             except Exception as e:
