@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "langrocks"
-version = "0.1.2"
+version = "0.1.3"
 description = "Tools like web browser and code interpreters for LLMs"
 authors = ["ajhai <nitk.ajay@gmail.com>"]
 license = "MIT"
