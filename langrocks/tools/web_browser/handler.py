@@ -243,7 +243,7 @@ async def process_web_browser_request(
                 break
             elif step.type == GOTO:
                 await page.goto(
-                    (page.url + step.data if step.data and step.data.startswith("/") else step.data) or page.url,
+                    ((page.url + step.data) if step.data and step.data.startswith("/") else step.data) or page.url,
                 )
             elif step.type == CLICK:
                 locator = _get_locator(page, step.selector)
