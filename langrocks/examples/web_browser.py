@@ -70,10 +70,13 @@ with WebBrowser(
     print("Getting screenshot")
     print("Screenshot", web_browser.get_screenshot()[:100])
 
+    # Get a different webpage
+    print("Opening a different webpage")
+    print("Browser state", web_browser.get_text("https://www.github.com"))
+
     print("Terminating web browser")
     session = web_browser.terminate()
     print("Session data", session[:100])
-
 
 # Test the interactive web browser
 with WebBrowserContextManager("localhost:50051") as web_browser:

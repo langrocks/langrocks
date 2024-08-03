@@ -70,6 +70,7 @@ class WebBrowserContent(BaseModel):
     title: str = ""
     html: Optional[str] = None
     text: Optional[str] = None
+    markdown: Optional[str] = None
     screenshot: Optional[bytes] = None
     buttons: Optional[List[WebBrowserButton]] = None
     input_fields: Optional[List[WebBrowserInputField]] = None

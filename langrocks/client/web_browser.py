@@ -527,18 +527,25 @@ class WebBrowser:
         return self.get_session_data()
 
     # Helper functions
-    def goto(self, url: str) -> WebBrowserContent:
+    def goto(self, url: str, wait_timeout: int = 2000) -> WebBrowserContent:
         """
         Navigate to a URL.
         """
-        return self.run_command(
-            command=WebBrowserCommand(
-                command_type=WebBrowserCommandType.GOTO,
-                data=url,
-            ),
+        return self.run_commands(
+            commands=[
+                WebBrowserCommand(
+                    command_type=WebBrowserCommandType.GOTO,
+                    data=url,
+                ),
+                WebBrowserCommand(
+                    command_type=WebBrowserCommandType.WAIT,
+                    selector="body",
+                    data=str(wait_timeout),
+                ),
+            ]
         )
 
-    def wait(self, selector: str) -> WebBrowserContent:
+    def wait(self, selector: str, wait_timeout: int = 2000) -> WebBrowserContent:
         """
         Wait for an element to appear.
         """
@@ -546,6 +553,7 @@ class WebBrowser:
             command=WebBrowserCommand(
                 command_type=WebBrowserCommandType.WAIT,
                 selector=selector,
+                data=str(wait_timeout),
             ),
         )
 
@@ -572,106 +580,107 @@ class WebBrowser:
             ),
         )
 
-    def get_html(self) -> str:
+    def get_html(self, url=None) -> str:
         """
         Get the HTML content of the page.
         """
-        if self._last_content:
+        if self._last_content and self._last_content.url == url:
             return self._last_content.html
 
         # Run a WAIT command and return the HTML content
-        return self.wait("body").html
+        return self.goto(url).html if url else self.wait("body").html
 
-    def get_text(self) -> str:
+    def get_text(self, url=None) -> str:
         """
         Get the text content of the page.
         """
-        if self._last_content:
+        if self._last_content and self._last_content.url == url:
             return self._last_content.text
 
         # Run a WAIT command and return the text content
-        return self.wait("body").text
+        return self.goto(url).text if url else self.wait("body").text
 
-    def get_markdown(self) -> str:
+    def get_markdown(self, url=None) -> str:
         """
         Get the markdown content of the page.
         """
-        if self._last_content:
+        if self._last_content and self._last_content.url == url:
             return self._last_content.markdown
 
         # Run a WAIT command and return the markdown content
-        return self.wait("body").markdown
+        return self.goto(url).markdown if url else self.wait("body").markdown
 
-    def get_images(self) -> List[WebBrowserImage]:
+    def get_images(self, url=None) -> List[WebBrowserImage]:
         """
         Get the images from the page.
         """
-        if self._last_content:
+        if self._last_content and self._last_content.url == url:
             return self._last_content.images
 
         # Run a WAIT command and return the images
-        return self.wait("body").images
+        return self.goto(url).images if url else self.wait("body").images
 
-    def get_links(self) -> List[WebBrowserLink]:
+    def get_links(self, url=None) -> List[WebBrowserLink]:
         """
         Get the links from the page.
         """
-        if self._last_content:
+        if self._last_content and self._last_content.url == url:
             return self._last_content.links
 
         # Run a WAIT command and return the links
-        return self.wait("body").links
+        return self.goto(url).links if url else self.wait("body").links
 
-    def get_buttons(self) -> List[WebBrowserButton]:
+    def get_buttons(self, url=None) -> List[WebBrowserButton]:
         """
         Get the buttons from the page.
         """
-        if self._last_content:
+        if self._last_content and self._last_content.url == url:
             return self._last_content.buttons
 
         # Run a WAIT command and return the buttons
-        return self.wait("body").buttons
+        return self.goto(url).buttons if url else self.wait("body").buttons
 
-    def get_input_fields(self) -> List[WebBrowserInputField]:
+    def get_input_fields(self, url=None) -> List[WebBrowserInputField]:
         """
         Get the input fields from the page.
         """
-        if self._last_content:
+        if self._last_content and self._last_content.url == url:
             return self._last_content.input_fields
 
         # Run a WAIT command and return the input fields
-        return self.wait("body").input_fields
+        return self.goto(url).input_fields if url else self.wait("body").input_fields
 
-    def get_select_fields(self) -> List[WebBrowserSelectField]:
+    def get_select_fields(self, url=None) -> List[WebBrowserSelectField]:
         """
         Get the select fields from the page.
         """
-        if self._last_content:
+        if self._last_content and self._last_content.url == url:
             return self._last_content.select_fields
 
         # Run a WAIT command and return the select fields
-        return self.wait("body").select_fields
+        return self.goto(url).select_fields if url else self.wait("body").select_fields
 
-    def get_textarea_fields(self) -> List[WebBrowserTextAreaField]:
+    def get_textarea_fields(self, url=None) -> List[WebBrowserTextAreaField]:
         """
         Get the textarea fields from the page.
         """
-        if self._last_content:
+        if self._last_content and self._last_content.url == url:
             return self._last_content.textarea_fields
 
         # Run a WAIT command and return the textarea fields
-        return self.wait("body").textarea_fields
+        return self.goto(url).textarea_fields if url else self.wait("body").textarea_fields
 
-    def get_screenshot(self) -> str:
+    def get_screenshot(self, url=None) -> str:
         """
         Get a screenshot of the page as a data URL.
         """
         screenshot = None
-        if self._last_content:
+        if self._last_content and self._last_content.url == url:
             screenshot = self._last_content.screenshot
 
-        # Run a WAIT command and return the screenshot
-        screenshot = self.wait("body").screenshot
+        if not screenshot:
+            # Run a WAIT command and return the screenshot
+            screenshot = self.goto(url).screenshot if url else self.wait("body").screenshot
 
         if screenshot:
             return f"data:image/png;base64,{base64.b64encode(screenshot).decode()}"
