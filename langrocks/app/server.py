@@ -39,6 +39,13 @@ def _parse_args():
         action=argparse.BooleanOptionalAction,
     )
     parser.add_argument(
+        "--with-file-converter",
+        type=bool,
+        default=True,
+        help="Enable file converter",
+        action=argparse.BooleanOptionalAction,
+    )
+    parser.add_argument(
         "--max-displays",
         type=int,
         help="Maximum number of virtual displays to use",

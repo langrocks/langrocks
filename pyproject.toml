@@ -30,6 +30,11 @@ grpcio-tools = "^1.65.1"
 
 [tool.poetry.group.server.dependencies]
 grpcio-health-checking = "^1.65.1"
+grpcio = "1.65.1"
+
+
+[tool.poetry.group.file_operations.dependencies]
+pypandoc-binary = "^1.13"
 
 [build-system]
 requires = ["poetry-core"]

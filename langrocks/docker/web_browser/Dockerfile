@@ -13,6 +13,11 @@ RUN set -ex \
   x11vnc \
   novnc \
   redis-server \
+  texlive-latex-base \
+  texlive-latex-recommended \
+  texlive-fonts-recommended \
+  texlive-latex-extra \  
+  lmodern \
   " \
   && seq 1 8 | xargs -I{} mkdir -p /usr/share/man/man{} \
   && apt-get update && apt-get install -y --no-install-recommends $RUN_DEPS \

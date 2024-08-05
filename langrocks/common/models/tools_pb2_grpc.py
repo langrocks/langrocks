@@ -47,12 +47,24 @@ class ToolsStub(object):
             response_deserializer=tools__pb2.WebBrowserResponse.FromString,
             _registered_method=True,
         )
+        self.GetFileConverter = channel.unary_unary(
+            "/Tools/GetFileConverter",
+            request_serializer=tools__pb2.FileConverterRequest.SerializeToString,
+            response_deserializer=tools__pb2.FileConverterResponse.FromString,
+            _registered_method=True,
+        )
 
 
 class ToolsServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def GetWebBrowser(self, request_iterator, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def GetFileConverter(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
@@ -65,6 +77,11 @@ def add_ToolsServicer_to_server(servicer, server):
             servicer.GetWebBrowser,
             request_deserializer=tools__pb2.WebBrowserRequest.FromString,
             response_serializer=tools__pb2.WebBrowserResponse.SerializeToString,
+        ),
+        "GetFileConverter": grpc.unary_unary_rpc_method_handler(
+            servicer.GetFileConverter,
+            request_deserializer=tools__pb2.FileConverterRequest.FromString,
+            response_serializer=tools__pb2.FileConverterResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler("Tools", rpc_method_handlers)
@@ -95,6 +112,36 @@ class Tools(object):
             "/Tools/GetWebBrowser",
             tools__pb2.WebBrowserRequest.SerializeToString,
             tools__pb2.WebBrowserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def GetFileConverter(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/Tools/GetFileConverter",
+            tools__pb2.FileConverterRequest.SerializeToString,
+            tools__pb2.FileConverterResponse.FromString,
             options,
             channel_credentials,
             insecure,

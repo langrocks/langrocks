@@ -14,49 +14,53 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0btools.proto\"<\n\x07\x43ontent\x12#\n\tmime_type\x18\x01 \x01(\x0e\x32\x10.ContentMimeType\x12\x0c\n\x04\x64\x61ta\x18\x02 \x01(\x0c\"8\n\x17WebBrowserCommandOutput\x12\r\n\x05index\x18\x01 \x01(\x05\x12\x0e\n\x06output\x18\x02 \x01(\t\"6\n\x16WebBrowserCommandError\x12\r\n\x05index\x18\x01 \x01(\x05\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"Y\n\x11WebBrowserCommand\x12$\n\x04type\x18\x01 \x01(\x0e\x32\x16.WebBrowserCommandType\x12\x10\n\x08selector\x18\x02 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\t\"2\n\x10WebBrowserButton\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"6\n\x14WebBrowserInputField\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"7\n\x15WebBrowserSelectField\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"9\n\x17WebBrowserTextAreaField\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"=\n\x0eWebBrowserLink\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\x12\x0b\n\x03url\x18\x03 \x01(\t\">\n\x0fWebBrowserImage\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\x12\x0b\n\x03src\x18\x03 \x01(\t\"\xb8\x03\n\x11WebBrowserContent\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\x0c\n\x04html\x18\x03 \x01(\t\x12\x0c\n\x04text\x18\x04 \x01(\t\x12\x12\n\nscreenshot\x18\x05 \x01(\x0c\x12\"\n\x07\x62uttons\x18\x06 \x03(\x0b\x32\x11.WebBrowserButton\x12\x1e\n\x05links\x18\x07 \x03(\x0b\x32\x0f.WebBrowserLink\x12 \n\x06images\x18\x08 \x03(\x0b\x32\x10.WebBrowserImage\x12+\n\x0cinput_fields\x18\t \x03(\x0b\x32\x15.WebBrowserInputField\x12-\n\rselect_fields\x18\n \x03(\x0b\x32\x16.WebBrowserSelectField\x12\x31\n\x0ftextarea_fields\x18\x0b \x03(\x0b\x32\x18.WebBrowserTextAreaField\x12\x31\n\x0f\x63ommand_outputs\x18\x0c \x03(\x0b\x32\x18.WebBrowserCommandOutput\x12/\n\x0e\x63ommand_errors\x18\r \x03(\x0b\x32\x17.WebBrowserCommandError\"\xc3\x02\n\x17WebBrowserSessionConfig\x12\x10\n\x08init_url\x18\x01 \x01(\t\x12\x1d\n\x15terminate_url_pattern\x18\x02 \x01(\t\x12\x14\n\x0csession_data\x18\x03 \x01(\t\x12\x0f\n\x07timeout\x18\x04 \x01(\x05\x12\x17\n\x0f\x63ommand_timeout\x18\x05 \x01(\x05\x12\x0c\n\x04text\x18\x06 \x01(\x08\x12\x0c\n\x04html\x18\x07 \x01(\x08\x12\x10\n\x08markdown\x18\x08 \x01(\x08\x12\x17\n\x0fpersist_session\x18\t \x01(\x08\x12\x1a\n\x12\x63\x61pture_screenshot\x18\n \x01(\x08\x12\x13\n\x0binteractive\x18\x0b \x01(\x08\x12\x14\n\x0crecord_video\x18\x0c \x01(\x08\x12\x10\n\x08\x61nnotate\x18\r \x01(\x08\x12\x17\n\x0ftags_to_extract\x18\x0e \x03(\t\"H\n\x11WebBrowserSession\x12\x0e\n\x06ws_url\x18\x01 \x01(\t\x12\x14\n\x0csession_data\x18\x02 \x01(\t\x12\r\n\x05video\x18\x03 \x01(\x0c\"k\n\x11WebBrowserRequest\x12\x30\n\x0esession_config\x18\x01 \x01(\x0b\x32\x18.WebBrowserSessionConfig\x12$\n\x08\x63ommands\x18\x02 \x03(\x0b\x32\x12.WebBrowserCommand\"\x7f\n\x12WebBrowserResponse\x12#\n\x07session\x18\x01 \x01(\x0b\x32\x12.WebBrowserSession\x12\x1f\n\x05state\x18\x02 \x01(\x0e\x32\x10.WebBrowserState\x12#\n\x07\x63ontent\x18\x03 \x01(\x0b\x32\x12.WebBrowserContent*\xce\x02\n\x0f\x43ontentMimeType\x12\x08\n\x04TEXT\x10\x00\x12\x08\n\x04JSON\x10\x01\x12\x08\n\x04HTML\x10\x02\x12\x07\n\x03PNG\x10\x03\x12\x08\n\x04JPEG\x10\x04\x12\x07\n\x03SVG\x10\x05\x12\x07\n\x03PDF\x10\x06\x12\t\n\x05LATEX\x10\x07\x12\x0c\n\x08MARKDOWN\x10\x08\x12\x07\n\x03\x43SV\x10\t\x12\x07\n\x03ZIP\x10\n\x12\x07\n\x03TAR\x10\x0b\x12\x08\n\x04GZIP\x10\x0c\x12\t\n\x05\x42ZIP2\x10\r\x12\x06\n\x02XZ\x10\x0e\x12\x08\n\x04\x44OCX\x10\x0f\x12\x08\n\x04PPTX\x10\x10\x12\x08\n\x04XLSX\x10\x11\x12\x07\n\x03\x44OC\x10\x12\x12\x07\n\x03PPT\x10\x13\x12\x07\n\x03XLS\x10\x14\x12\x05\n\x01\x43\x10\x15\x12\x07\n\x03\x43PP\x10\x16\x12\x08\n\x04JAVA\x10\x17\x12\n\n\x06\x43SHARP\x10\x18\x12\n\n\x06PYTHON\x10\x19\x12\x08\n\x04RUBY\x10\x1a\x12\x07\n\x03PHP\x10\x1b\x12\x0e\n\nJAVASCRIPT\x10\x1c\x12\x07\n\x03XML\x10\x1d\x12\x07\n\x03\x43SS\x10\x1e\x12\x07\n\x03GIF\x10\x1f*\x80\x01\n\x15WebBrowserCommandType\x12\x08\n\x04GOTO\x10\x00\x12\r\n\tTERMINATE\x10\x01\x12\x08\n\x04WAIT\x10\x02\x12\t\n\x05\x43LICK\x10\x03\x12\x08\n\x04\x43OPY\x10\x04\x12\x08\n\x04TYPE\x10\x05\x12\x0c\n\x08SCROLL_X\x10\x06\x12\x0c\n\x08SCROLL_Y\x10\x07\x12\t\n\x05\x45NTER\x10\x08*;\n\x0fWebBrowserState\x12\x0b\n\x07RUNNING\x10\x00\x12\x0e\n\nTERMINATED\x10\x01\x12\x0b\n\x07TIMEOUT\x10\x02\x32G\n\x05Tools\x12>\n\rGetWebBrowser\x12\x12.WebBrowserRequest\x1a\x13.WebBrowserResponse\"\x00(\x01\x30\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0btools.proto\"J\n\x07\x43ontent\x12#\n\tmime_type\x18\x01 \x01(\x0e\x32\x10.ContentMimeType\x12\x0c\n\x04\x64\x61ta\x18\x02 \x01(\x0c\x12\x0c\n\x04name\x18\x03 \x01(\t\"8\n\x17WebBrowserCommandOutput\x12\r\n\x05index\x18\x01 \x01(\x05\x12\x0e\n\x06output\x18\x02 \x01(\t\"6\n\x16WebBrowserCommandError\x12\r\n\x05index\x18\x01 \x01(\x05\x12\r\n\x05\x65rror\x18\x02 \x01(\t\"Y\n\x11WebBrowserCommand\x12$\n\x04type\x18\x01 \x01(\x0e\x32\x16.WebBrowserCommandType\x12\x10\n\x08selector\x18\x02 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\t\"2\n\x10WebBrowserButton\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"6\n\x14WebBrowserInputField\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"7\n\x15WebBrowserSelectField\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"9\n\x17WebBrowserTextAreaField\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"=\n\x0eWebBrowserLink\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\x12\x0b\n\x03url\x18\x03 \x01(\t\">\n\x0fWebBrowserImage\x12\x10\n\x08selector\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\x12\x0b\n\x03src\x18\x03 \x01(\t\"\xb8\x03\n\x11WebBrowserContent\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\x0c\n\x04html\x18\x03 \x01(\t\x12\x0c\n\x04text\x18\x04 \x01(\t\x12\x12\n\nscreenshot\x18\x05 \x01(\x0c\x12\"\n\x07\x62uttons\x18\x06 \x03(\x0b\x32\x11.WebBrowserButton\x12\x1e\n\x05links\x18\x07 \x03(\x0b\x32\x0f.WebBrowserLink\x12 \n\x06images\x18\x08 \x03(\x0b\x32\x10.WebBrowserImage\x12+\n\x0cinput_fields\x18\t \x03(\x0b\x32\x15.WebBrowserInputField\x12-\n\rselect_fields\x18\n \x03(\x0b\x32\x16.WebBrowserSelectField\x12\x31\n\x0ftextarea_fields\x18\x0b \x03(\x0b\x32\x18.WebBrowserTextAreaField\x12\x31\n\x0f\x63ommand_outputs\x18\x0c \x03(\x0b\x32\x18.WebBrowserCommandOutput\x12/\n\x0e\x63ommand_errors\x18\r \x03(\x0b\x32\x17.WebBrowserCommandError\"\xc3\x02\n\x17WebBrowserSessionConfig\x12\x10\n\x08init_url\x18\x01 \x01(\t\x12\x1d\n\x15terminate_url_pattern\x18\x02 \x01(\t\x12\x14\n\x0csession_data\x18\x03 \x01(\t\x12\x0f\n\x07timeout\x18\x04 \x01(\x05\x12\x17\n\x0f\x63ommand_timeout\x18\x05 \x01(\x05\x12\x0c\n\x04text\x18\x06 \x01(\x08\x12\x0c\n\x04html\x18\x07 \x01(\x08\x12\x10\n\x08markdown\x18\x08 \x01(\x08\x12\x17\n\x0fpersist_session\x18\t \x01(\x08\x12\x1a\n\x12\x63\x61pture_screenshot\x18\n \x01(\x08\x12\x13\n\x0binteractive\x18\x0b \x01(\x08\x12\x14\n\x0crecord_video\x18\x0c \x01(\x08\x12\x10\n\x08\x61nnotate\x18\r \x01(\x08\x12\x17\n\x0ftags_to_extract\x18\x0e \x03(\t\"H\n\x11WebBrowserSession\x12\x0e\n\x06ws_url\x18\x01 \x01(\t\x12\x14\n\x0csession_data\x18\x02 \x01(\t\x12\r\n\x05video\x18\x03 \x01(\x0c\"k\n\x11WebBrowserRequest\x12\x30\n\x0esession_config\x18\x01 \x01(\x0b\x32\x18.WebBrowserSessionConfig\x12$\n\x08\x63ommands\x18\x02 \x03(\x0b\x32\x12.WebBrowserCommand\"\x7f\n\x12WebBrowserResponse\x12#\n\x07session\x18\x01 \x01(\x0b\x32\x12.WebBrowserSession\x12\x1f\n\x05state\x18\x02 \x01(\x0e\x32\x10.WebBrowserState\x12#\n\x07\x63ontent\x18\x03 \x01(\x0b\x32\x12.WebBrowserContent\"k\n\x14\x46ileConverterRequest\x12\x16\n\x04\x66ile\x18\x01 \x01(\x0b\x32\x08.Content\x12*\n\x10target_mime_type\x18\x02 \x01(\x0e\x32\x10.ContentMimeType\x12\x0f\n\x07options\x18\x03 \x03(\t\"/\n\x15\x46ileConverterResponse\x12\x16\n\x04\x66ile\x18\x01 \x01(\x0b\x32\x08.Content*\xce\x02\n\x0f\x43ontentMimeType\x12\x08\n\x04TEXT\x10\x00\x12\x08\n\x04JSON\x10\x01\x12\x08\n\x04HTML\x10\x02\x12\x07\n\x03PNG\x10\x03\x12\x08\n\x04JPEG\x10\x04\x12\x07\n\x03SVG\x10\x05\x12\x07\n\x03PDF\x10\x06\x12\t\n\x05LATEX\x10\x07\x12\x0c\n\x08MARKDOWN\x10\x08\x12\x07\n\x03\x43SV\x10\t\x12\x07\n\x03ZIP\x10\n\x12\x07\n\x03TAR\x10\x0b\x12\x08\n\x04GZIP\x10\x0c\x12\t\n\x05\x42ZIP2\x10\r\x12\x06\n\x02XZ\x10\x0e\x12\x08\n\x04\x44OCX\x10\x0f\x12\x08\n\x04PPTX\x10\x10\x12\x08\n\x04XLSX\x10\x11\x12\x07\n\x03\x44OC\x10\x12\x12\x07\n\x03PPT\x10\x13\x12\x07\n\x03XLS\x10\x14\x12\x05\n\x01\x43\x10\x15\x12\x07\n\x03\x43PP\x10\x16\x12\x08\n\x04JAVA\x10\x17\x12\n\n\x06\x43SHARP\x10\x18\x12\n\n\x06PYTHON\x10\x19\x12\x08\n\x04RUBY\x10\x1a\x12\x07\n\x03PHP\x10\x1b\x12\x0e\n\nJAVASCRIPT\x10\x1c\x12\x07\n\x03XML\x10\x1d\x12\x07\n\x03\x43SS\x10\x1e\x12\x07\n\x03GIF\x10\x1f*\x80\x01\n\x15WebBrowserCommandType\x12\x08\n\x04GOTO\x10\x00\x12\r\n\tTERMINATE\x10\x01\x12\x08\n\x04WAIT\x10\x02\x12\t\n\x05\x43LICK\x10\x03\x12\x08\n\x04\x43OPY\x10\x04\x12\x08\n\x04TYPE\x10\x05\x12\x0c\n\x08SCROLL_X\x10\x06\x12\x0c\n\x08SCROLL_Y\x10\x07\x12\t\n\x05\x45NTER\x10\x08*;\n\x0fWebBrowserState\x12\x0b\n\x07RUNNING\x10\x00\x12\x0e\n\nTERMINATED\x10\x01\x12\x0b\n\x07TIMEOUT\x10\x02\x32\x8c\x01\n\x05Tools\x12>\n\rGetWebBrowser\x12\x12.WebBrowserRequest\x1a\x13.WebBrowserResponse\"\x00(\x01\x30\x01\x12\x43\n\x10GetFileConverter\x12\x15.FileConverterRequest\x1a\x16.FileConverterResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'tools_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_CONTENTMIMETYPE']._serialized_start=1715
-  _globals['_CONTENTMIMETYPE']._serialized_end=2049
-  _globals['_WEBBROWSERCOMMANDTYPE']._serialized_start=2052
-  _globals['_WEBBROWSERCOMMANDTYPE']._serialized_end=2180
-  _globals['_WEBBROWSERSTATE']._serialized_start=2182
-  _globals['_WEBBROWSERSTATE']._serialized_end=2241
+  _globals['_CONTENTMIMETYPE']._serialized_start=1887
+  _globals['_CONTENTMIMETYPE']._serialized_end=2221
+  _globals['_WEBBROWSERCOMMANDTYPE']._serialized_start=2224
+  _globals['_WEBBROWSERCOMMANDTYPE']._serialized_end=2352
+  _globals['_WEBBROWSERSTATE']._serialized_start=2354
+  _globals['_WEBBROWSERSTATE']._serialized_end=2413
   _globals['_CONTENT']._serialized_start=15
-  _globals['_CONTENT']._serialized_end=75
-  _globals['_WEBBROWSERCOMMANDOUTPUT']._serialized_start=77
-  _globals['_WEBBROWSERCOMMANDOUTPUT']._serialized_end=133
-  _globals['_WEBBROWSERCOMMANDERROR']._serialized_start=135
-  _globals['_WEBBROWSERCOMMANDERROR']._serialized_end=189
-  _globals['_WEBBROWSERCOMMAND']._serialized_start=191
-  _globals['_WEBBROWSERCOMMAND']._serialized_end=280
-  _globals['_WEBBROWSERBUTTON']._serialized_start=282
-  _globals['_WEBBROWSERBUTTON']._serialized_end=332
-  _globals['_WEBBROWSERINPUTFIELD']._serialized_start=334
-  _globals['_WEBBROWSERINPUTFIELD']._serialized_end=388
-  _globals['_WEBBROWSERSELECTFIELD']._serialized_start=390
-  _globals['_WEBBROWSERSELECTFIELD']._serialized_end=445
-  _globals['_WEBBROWSERTEXTAREAFIELD']._serialized_start=447
-  _globals['_WEBBROWSERTEXTAREAFIELD']._serialized_end=504
-  _globals['_WEBBROWSERLINK']._serialized_start=506
-  _globals['_WEBBROWSERLINK']._serialized_end=567
-  _globals['_WEBBROWSERIMAGE']._serialized_start=569
-  _globals['_WEBBROWSERIMAGE']._serialized_end=631
-  _globals['_WEBBROWSERCONTENT']._serialized_start=634
-  _globals['_WEBBROWSERCONTENT']._serialized_end=1074
-  _globals['_WEBBROWSERSESSIONCONFIG']._serialized_start=1077
-  _globals['_WEBBROWSERSESSIONCONFIG']._serialized_end=1400
-  _globals['_WEBBROWSERSESSION']._serialized_start=1402
-  _globals['_WEBBROWSERSESSION']._serialized_end=1474
-  _globals['_WEBBROWSERREQUEST']._serialized_start=1476
-  _globals['_WEBBROWSERREQUEST']._serialized_end=1583
-  _globals['_WEBBROWSERRESPONSE']._serialized_start=1585
-  _globals['_WEBBROWSERRESPONSE']._serialized_end=1712
-  _globals['_TOOLS']._serialized_start=2243
-  _globals['_TOOLS']._serialized_end=2314
+  _globals['_CONTENT']._serialized_end=89
+  _globals['_WEBBROWSERCOMMANDOUTPUT']._serialized_start=91
+  _globals['_WEBBROWSERCOMMANDOUTPUT']._serialized_end=147
+  _globals['_WEBBROWSERCOMMANDERROR']._serialized_start=149
+  _globals['_WEBBROWSERCOMMANDERROR']._serialized_end=203
+  _globals['_WEBBROWSERCOMMAND']._serialized_start=205
+  _globals['_WEBBROWSERCOMMAND']._serialized_end=294
+  _globals['_WEBBROWSERBUTTON']._serialized_start=296
+  _globals['_WEBBROWSERBUTTON']._serialized_end=346
+  _globals['_WEBBROWSERINPUTFIELD']._serialized_start=348
+  _globals['_WEBBROWSERINPUTFIELD']._serialized_end=402
+  _globals['_WEBBROWSERSELECTFIELD']._serialized_start=404
+  _globals['_WEBBROWSERSELECTFIELD']._serialized_end=459
+  _globals['_WEBBROWSERTEXTAREAFIELD']._serialized_start=461
+  _globals['_WEBBROWSERTEXTAREAFIELD']._serialized_end=518
+  _globals['_WEBBROWSERLINK']._serialized_start=520
+  _globals['_WEBBROWSERLINK']._serialized_end=581
+  _globals['_WEBBROWSERIMAGE']._serialized_start=583
+  _globals['_WEBBROWSERIMAGE']._serialized_end=645
+  _globals['_WEBBROWSERCONTENT']._serialized_start=648
+  _globals['_WEBBROWSERCONTENT']._serialized_end=1088
+  _globals['_WEBBROWSERSESSIONCONFIG']._serialized_start=1091
+  _globals['_WEBBROWSERSESSIONCONFIG']._serialized_end=1414
+  _globals['_WEBBROWSERSESSION']._serialized_start=1416
+  _globals['_WEBBROWSERSESSION']._serialized_end=1488
+  _globals['_WEBBROWSERREQUEST']._serialized_start=1490
+  _globals['_WEBBROWSERREQUEST']._serialized_end=1597
+  _globals['_WEBBROWSERRESPONSE']._serialized_start=1599
+  _globals['_WEBBROWSERRESPONSE']._serialized_end=1726
+  _globals['_FILECONVERTERREQUEST']._serialized_start=1728
+  _globals['_FILECONVERTERREQUEST']._serialized_end=1835
+  _globals['_FILECONVERTERRESPONSE']._serialized_start=1837
+  _globals['_FILECONVERTERRESPONSE']._serialized_end=1884
+  _globals['_TOOLS']._serialized_start=2416
+  _globals['_TOOLS']._serialized_end=2556
 # @@protoc_insertion_point(module_scope)

@@ -38,6 +38,7 @@ enum ContentMimeType {
 message Content {
   ContentMimeType mime_type = 1; // mime type of content
   bytes data = 2; // data of content
+  string name = 3; // name of content
 }
 
 enum WebBrowserCommandType {
@@ -156,8 +157,20 @@ message WebBrowserResponse {
   WebBrowserContent content = 3; // content from the browser after running inputs
 }
 
+message FileConverterRequest {
+  Content file = 1; // file to convert
+  ContentMimeType target_mime_type = 2; // target mime type
+  repeated string options = 3; // options for conversion
+}
+
+message FileConverterResponse {
+  Content file = 1; // converted file
+}
+
 service Tools {
 
   rpc GetWebBrowser (stream WebBrowserRequest) returns (stream WebBrowserResponse) {}
+
+  rpc GetFileConverter (FileConverterRequest) returns (FileConverterResponse) {}
   
 }
