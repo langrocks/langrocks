@@ -70,6 +70,7 @@ class FileConverterHandler:
                 _mime_type_to_file_extension(request.target_mime_type),
                 format=_mime_type_to_file_extension(request.file.mime_type),
                 outputfile=temp_file,
+                extra_args=request.options,
             )
 
             converted_data = open(temp_file, "rb").read()

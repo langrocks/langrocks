@@ -99,6 +99,7 @@ with FileOperations("localhost:50051") as fops:
         filename="resume.tex",
         input_mime_type=FileMimeType.LATEX,
         output_mime_type=FileMimeType.PDF,
+        options=["-V", "geometry:margin=0.5in"],
     )
 
     # with open(response.name, "wb") as f:
