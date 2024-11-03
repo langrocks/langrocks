@@ -23,13 +23,14 @@ class ToolHandler(ToolsServicer):
         wss_hostname="localhost",
         wss_port=50052,
         kernel_manager=None,
+        ublock_path=None,
     ):
         super().__init__()
         self.display_pool = display_pool
         self.wss_secure = wss_secure
         self.wss_hostname = wss_hostname
         self.wss_port = wss_port
-        self.web_browser_handler = WebBrowserHandler(display_pool, wss_secure, wss_hostname, wss_port)
+        self.web_browser_handler = WebBrowserHandler(display_pool, wss_secure, wss_hostname, wss_port, ublock_path)
         self.file_converter_handler = FileConverterHandler()
         self.code_runner = CodeRunner(kernel_manager=kernel_manager)
 

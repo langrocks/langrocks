@@ -18,6 +18,8 @@ RUN set -ex \
   texlive-fonts-recommended \
   texlive-latex-extra \  
   lmodern \
+  wget \
+  unzip \
   " \
   && seq 1 8 | xargs -I{} mkdir -p /usr/share/man/man{} \
   && apt-get update && apt-get install -y --no-install-recommends $RUN_DEPS \

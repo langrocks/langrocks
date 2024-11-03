@@ -37,11 +37,11 @@ from langrocks.common.models.tools_pb2 import (
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36 Edg/99.0.1150.46",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36 Edg/100.0.1150.46",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 12.0; rv:99.0) Gecko/20100101 Firefox/99.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36 Edg/99.0.1150.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36 Edg/100.0.1150.36",
 ]
 
 # Script to disable webdriver flag
@@ -302,12 +302,28 @@ async def process_web_browser_request(
     return content, terminated
 
 
+async def save_storage_state(context):
+    try:
+        # Get cookies directly from context
+        cookies = await context.cookies()
+
+        # Create storage state with just cookies
+        storage_state = {"cookies": cookies, "origins": []}
+
+        return storage_state
+
+    except Exception as e:
+        logger.warning(f"Failed to save storage state: {str(e)}")
+        return {"cookies": [], "origins": []}
+
+
 class WebBrowserHandler:
-    def __init__(self, display_pool, wss_secure, wss_hostname, wss_port):
+    def __init__(self, display_pool, wss_secure, wss_hostname, wss_port, ublock_path):
         self.display_pool = display_pool
         self.wss_secure = wss_secure
         self.wss_hostname = wss_hostname
         self.wss_port = wss_port
+        self.ublock_path = ublock_path
 
         # Load utils script
         with open(os.path.join(os.path.dirname(__file__), "utils.js")) as f:
@@ -333,14 +349,43 @@ class WebBrowserHandler:
                     if session_data
                     else None
                 )
-                browser = await playwright.chromium.launch(
-                    headless=False, args=["--disable-blink-features=AutomationControlled"]
-                )
-                context = await browser.new_context(
-                    no_viewport=True,
-                    storage_state=session_data,
-                    user_agent=USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
-                )
+
+                # Configure browser launch options with uBlock if available
+                browser_args = [
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-default-browser-check",
+                    "--no-first-run",
+                    "--disable-features=IsolateOrigins,site-per-process",
+                ]
+                if self.ublock_path:
+                    logger.info(f"Enabling uBlock Origin from {self.ublock_path}")
+                    context = await playwright.chromium.launch_persistent_context(
+                        headless=False,
+                        chromium_sandbox=False,
+                        user_data_dir="",
+                        args=browser_args
+                        + [
+                            f"--disable-extensions-except={self.ublock_path}",
+                            f"--load-extension={self.ublock_path}",
+                        ],
+                        user_agent=USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
+                        no_viewport=True,
+                        ignore_default_args=["--enable-automation"],
+                    )
+                else:
+                    context = await playwright.chromium.launch_persistent_context(
+                        headless=False,
+                        chromium_sandbox=False,
+                        user_data_dir="",
+                        args=browser_args,
+                        user_agent=USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
+                        no_viewport=True,
+                        ignore_default_args=["--enable-automation"],
+                    )
+
+                if session_data:
+                    await context.add_cookies(session_data["cookies"])
+
                 await context.add_init_script(BROWSER_INIT_SCRIPT)
                 page = await context.new_page()
 
@@ -356,12 +401,12 @@ class WebBrowserHandler:
                 )
 
                 if terminated and session_config.persist_session:
-                    session_data = await context.storage_state()
-                    await browser.close()
+                    session_data = await save_storage_state(context)
+                    await context.close()
                     yield (content, terminated, session_data)
                 else:
                     if terminated:
-                        await browser.close()
+                        await context.close()
                     yield content, terminated, None
 
                 for next_request in request_iterator:
@@ -369,12 +414,12 @@ class WebBrowserHandler:
                         page, self.utils_js, session_config, next_request
                     )
                     if terminated and session_config.persist_session:
-                        session_data = await context.storage_state()
-                        await browser.close()
+                        session_data = await save_storage_state(context)
+                        await context.close()
                         yield (content, terminated, session_data)
                     else:
                         if terminated:
-                            await browser.close()
+                            await context.close()
                         yield content, terminated, None
 
                     await asyncio.sleep(0.1)
@@ -383,7 +428,7 @@ class WebBrowserHandler:
                 logger.exception(e)
             finally:
                 # Clean up
-                await browser.close()
+                await context.close()
 
     def get_web_browser(
         self,

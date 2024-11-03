@@ -125,6 +125,12 @@ def _parse_args():
         help="Log level",
         default="INFO",
     )
+    parser.add_argument(
+        "--ublock-path",
+        type=str,
+        help="Path to uBlock Origin extension directory",
+        default=None,
+    )
     return parser.parse_args()
 
 
@@ -145,6 +151,7 @@ def run_server(args, display_pool):
         wss_hostname=args.wss_hostname,
         wss_port=args.wss_port,
         kernel_manager=MultiKernelManager(),
+        ublock_path=args.ublock_path,
     )
 
     add_ToolsServicer_to_server(tool_handler, server)
