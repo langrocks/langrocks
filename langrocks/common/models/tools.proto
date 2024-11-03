@@ -140,6 +140,13 @@ enum WebBrowserState {
   TIMEOUT = 2; // browser is timed out
 }
 
+enum CodeRunnerState {
+  CODE_RUNNING = 0; // code is running
+  CODE_TERMINATED = 1; // code is terminated
+  CODE_TIMEOUT = 2; // code is timed out
+  CODE_FINISHED = 3; // code is finished
+}
+
 message WebBrowserSession {
   string ws_url = 1; // websocket url to connect to for remote display
   string session_data = 2; // session data to persist
@@ -167,10 +174,32 @@ message FileConverterResponse {
   Content file = 1; // converted file
 }
 
+message CodeRunnerSession {
+  string session_id = 1; // session id
+  string session_data = 2; // session data to persist
+}
+
+message CodeRunnerRequest {
+  string source_code = 1; // code to run
+  int32 timeout_secs = 2; // timeout in seconds
+  CodeRunnerSession session = 3; // session data
+  repeated Content files = 4; // files in the code run session
+}
+
+message CodeRunnerResponse {
+  CodeRunnerState state = 1; // state of runner
+  repeated Content stdout = 2; // stdout of code
+  string stderr = 3; // stderr of code
+  repeated Content content = 4; // content from the code run session
+  CodeRunnerSession session = 5; // session data  
+}
+
 service Tools {
 
   rpc GetWebBrowser (stream WebBrowserRequest) returns (stream WebBrowserResponse) {}
 
   rpc GetFileConverter (FileConverterRequest) returns (FileConverterResponse) {}
+
+  rpc GetCodeRunner (stream CodeRunnerRequest) returns (stream CodeRunnerResponse) {}
   
 }

@@ -8,7 +8,7 @@ readme = "README.md"
 packages = [
     {include = "langrocks/app/server.py"},
     {include = "langrocks/common/"},
-    {include = "langrocks/client/"}
+    {include = "langrocks/client/"},
 ]
 
 [tool.poetry.scripts]
@@ -35,6 +35,17 @@ grpcio = "1.65.1"
 
 [tool.poetry.group.file_operations.dependencies]
 pypandoc-binary = "^1.13"
+
+
+[tool.poetry.group.code_runner.dependencies]
+jupyter-client = "^8.6.2"
+dill = "^0.3.8"
+ipython = "^8.26.0"
+ipykernel = "^6.29.5"
+virtualenv = "^20.26.3"
+
+[tool.poetry.plugins."jupyter_client.kernel_provisioners"]
+chroot-provisioner = "langrocks.common.provisioners.chroot:ChrootProvisioner"
 
 [build-system]
 requires = ["poetry-core"]

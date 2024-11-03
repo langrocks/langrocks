@@ -50,6 +50,15 @@ RUN poetry config virtualenvs.create false \
 COPY langrocks/docker/web_browser/docker-entrypoint.sh /code/langrocks/docker/web_browser/docker-entrypoint.sh
 RUN chmod +x /code/langrocks/docker/web_browser/docker-entrypoint.sh
 
+# Install kernel and related packages
+RUN ipython kernel install --name "python3"
+RUN pip install matplotlib
+COPY langrocks/tools/code_interpreter/kernels/chroot_python /usr/local/share/jupyter/kernels/chroot_python
+
+RUN mkdir /tmp/workspaces
+RUN mkdir /tmp/workspaces/tmp
+
+
 # Install grpc_health_probe
 RUN wget -qO/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.28/grpc_health_probe-linux-amd64 && \
     chmod +x /grpc_health_probe

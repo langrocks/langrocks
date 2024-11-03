@@ -6,6 +6,7 @@ from concurrent import futures
 import redis
 from grpc import server as grpc_server
 from grpc_health.v1 import health, health_pb2, health_pb2_grpc
+from jupyter_client.multikernelmanager import MultiKernelManager
 
 from langrocks.common.display import VirtualDisplayPool
 from langrocks.common.models.tools_pb2_grpc import add_ToolsServicer_to_server
@@ -143,6 +144,7 @@ def run_server(args, display_pool):
         wss_secure=args.wss_secure,
         wss_hostname=args.wss_hostname,
         wss_port=args.wss_port,
+        kernel_manager=MultiKernelManager(),
     )
 
     add_ToolsServicer_to_server(tool_handler, server)

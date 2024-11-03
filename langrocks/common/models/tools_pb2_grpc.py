@@ -53,6 +53,12 @@ class ToolsStub(object):
             response_deserializer=tools__pb2.FileConverterResponse.FromString,
             _registered_method=True,
         )
+        self.GetCodeRunner = channel.stream_stream(
+            "/Tools/GetCodeRunner",
+            request_serializer=tools__pb2.CodeRunnerRequest.SerializeToString,
+            response_deserializer=tools__pb2.CodeRunnerResponse.FromString,
+            _registered_method=True,
+        )
 
 
 class ToolsServicer(object):
@@ -70,6 +76,12 @@ class ToolsServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def GetCodeRunner(self, request_iterator, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
 
 def add_ToolsServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -82,6 +94,11 @@ def add_ToolsServicer_to_server(servicer, server):
             servicer.GetFileConverter,
             request_deserializer=tools__pb2.FileConverterRequest.FromString,
             response_serializer=tools__pb2.FileConverterResponse.SerializeToString,
+        ),
+        "GetCodeRunner": grpc.stream_stream_rpc_method_handler(
+            servicer.GetCodeRunner,
+            request_deserializer=tools__pb2.CodeRunnerRequest.FromString,
+            response_serializer=tools__pb2.CodeRunnerResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler("Tools", rpc_method_handlers)
@@ -142,6 +159,36 @@ class Tools(object):
             "/Tools/GetFileConverter",
             tools__pb2.FileConverterRequest.SerializeToString,
             tools__pb2.FileConverterResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def GetCodeRunner(
+        request_iterator,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.stream_stream(
+            request_iterator,
+            target,
+            "/Tools/GetCodeRunner",
+            tools__pb2.CodeRunnerRequest.SerializeToString,
+            tools__pb2.CodeRunnerResponse.FromString,
             options,
             channel_credentials,
             insecure,

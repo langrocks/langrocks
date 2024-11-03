@@ -28,4 +28,4 @@ generate-stubs:
 
 run-web-browser-container:
 	@echo "Running web browser container..."
-	docker run -it --rm --name $(WEB_BROWSER_IMAGE_NAME) -p 50051-50053:50051-50053 -v ./langrocks/:/code/langrocks $(WEB_BROWSER_IMAGE_NAME) /bin/bash
+	docker run -it --rm --cap-add=SYS_ADMIN --name $(WEB_BROWSER_IMAGE_NAME) -p 50051-50053:50051-50053 -v ./langrocks/:/code/langrocks $(WEB_BROWSER_IMAGE_NAME) /bin/bash

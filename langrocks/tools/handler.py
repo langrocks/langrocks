@@ -3,8 +3,14 @@ from typing import Iterator
 from grpc import ServicerContext
 
 from langrocks.common.display import VirtualDisplayPool
-from langrocks.common.models.tools_pb2 import WebBrowserRequest, WebBrowserResponse
+from langrocks.common.models.tools_pb2 import (
+    CodeRunnerRequest,
+    CodeRunnerResponse,
+    WebBrowserRequest,
+    WebBrowserResponse,
+)
 from langrocks.common.models.tools_pb2_grpc import ToolsServicer
+from langrocks.tools.code_interpreter.runner import CodeRunner
 from langrocks.tools.file_operations.file_converter import FileConverterHandler
 from langrocks.tools.web_browser.handler import WebBrowserHandler
 
@@ -23,9 +29,9 @@ class ToolHandler(ToolsServicer):
         self.wss_secure = wss_secure
         self.wss_hostname = wss_hostname
         self.wss_port = wss_port
-        self.kernel_manager = kernel_manager
         self.web_browser_handler = WebBrowserHandler(display_pool, wss_secure, wss_hostname, wss_port)
         self.file_converter_handler = FileConverterHandler()
+        self.code_runner = CodeRunner(kernel_manager=kernel_manager)
 
     def GetWebBrowser(
         self,
@@ -36,3 +42,10 @@ class ToolHandler(ToolsServicer):
 
     def GetFileConverter(self, request, context):
         return self.file_converter_handler.process(request)
+
+    def GetCodeRunner(
+        self,
+        request_iterator: Iterator[CodeRunnerRequest],
+        context: ServicerContext,
+    ) -> Iterator[CodeRunnerResponse]:
+        return self.code_runner.process(request_iterator)
