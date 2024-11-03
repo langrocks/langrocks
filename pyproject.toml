@@ -25,12 +25,12 @@ redis = "^5.0.7"
 
 
 [tool.poetry.group.dev.dependencies]
-grpcio-tools = "^1.65.1"
+grpcio-tools = "^1.67.1"
 
 
 [tool.poetry.group.server.dependencies]
-grpcio-health-checking = "^1.65.1"
-grpcio = "1.65.1"
+grpcio-health-checking = "^1.67.1"
+grpcio = "1.67.1"
 
 
 [tool.poetry.group.file_operations.dependencies]
