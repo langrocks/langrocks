@@ -101,6 +101,11 @@ message WebBrowserImage {
   string src = 3; // src of image
 }
 
+message WebBrowserDownload {
+  string url = 1; // url of download
+  Content file = 2; // file of download
+}
+
 message WebBrowserContent {
   string url = 1; // url of page
   string title = 2; // title of page
@@ -115,6 +120,7 @@ message WebBrowserContent {
   repeated WebBrowserTextAreaField textarea_fields = 11; // textareas on page  
   repeated WebBrowserCommandOutput command_outputs = 12; // outputs of commands
   repeated WebBrowserCommandError command_errors = 13; // errors of commands
+  repeated WebBrowserDownload downloads = 14; // downloads on page
 }
 
 message WebBrowserSessionConfig {
@@ -132,6 +138,7 @@ message WebBrowserSessionConfig {
   bool record_video = 12; // record video of the session while running
   bool annotate = 13; // annoatate the page with tags before screenshot
   repeated string tags_to_extract = 14; // list of tags to extract from the page
+  bool allow_downloads = 15; // allow browser downloads
 }
 
 enum WebBrowserState {

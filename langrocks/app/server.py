@@ -131,6 +131,13 @@ def _parse_args():
         help="Path to uBlock Origin extension directory",
         default=None,
     )
+    parser.add_argument(
+        "--allow-browser-downloads",
+        type=bool,
+        default=False,
+        help="Allow browser downloads",
+        action=argparse.BooleanOptionalAction,
+    )
     return parser.parse_args()
 
 
@@ -152,6 +159,7 @@ def run_server(args, display_pool):
         wss_port=args.wss_port,
         kernel_manager=MultiKernelManager(),
         ublock_path=args.ublock_path,
+        allow_browser_downloads=args.allow_browser_downloads,
     )
 
     add_ToolsServicer_to_server(tool_handler, server)

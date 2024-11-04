@@ -318,12 +318,13 @@ async def save_storage_state(context):
 
 
 class WebBrowserHandler:
-    def __init__(self, display_pool, wss_secure, wss_hostname, wss_port, ublock_path):
+    def __init__(self, display_pool, wss_secure, wss_hostname, wss_port, ublock_path, allow_downloads):
         self.display_pool = display_pool
         self.wss_secure = wss_secure
         self.wss_hostname = wss_hostname
         self.wss_port = wss_port
         self.ublock_path = ublock_path
+        self.allow_downloads = allow_downloads
 
         # Load utils script
         with open(os.path.join(os.path.dirname(__file__), "utils.js")) as f:
@@ -371,6 +372,7 @@ class WebBrowserHandler:
                         user_agent=USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
                         no_viewport=True,
                         ignore_default_args=["--enable-automation"],
+                        accept_downloads=self.allow_downloads,
                     )
                 else:
                     context = await playwright.chromium.launch_persistent_context(
@@ -381,6 +383,7 @@ class WebBrowserHandler:
                         user_agent=USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
                         no_viewport=True,
                         ignore_default_args=["--enable-automation"],
+                        accept_downloads=self.allow_downloads,
                     )
 
                 if session_data:
