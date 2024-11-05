@@ -38,6 +38,7 @@ class FileMimeType(str, Enum):
     XML = "application/xml"
     CSS = "text/css"
     GIF = "image/gif"
+    OCTET_STREAM = "application/octet-stream"
 
     def __str__(self):
         return self.value
@@ -107,8 +108,10 @@ class FileMimeType(str, Enum):
             return ContentMimeType.CSS
         elif self == FileMimeType.GIF:
             return ContentMimeType.GIF
-        else:
-            raise ValueError(f"Unknown file mime type: {self}")
+        elif self == FileMimeType.OCTET_STREAM:
+            return ContentMimeType.OCTET_STREAM
+
+        return ContentMimeType.OCTET_STREAM
 
     @staticmethod
     def from_tools_content_mime_type(mime_type: ContentMimeType):
@@ -176,8 +179,10 @@ class FileMimeType(str, Enum):
             return FileMimeType.CSS
         elif mime_type == ContentMimeType.GIF:
             return FileMimeType.GIF
-        else:
-            raise ValueError(f"Unknown file mime type: {mime_type}")
+        elif mime_type == ContentMimeType.OCTET_STREAM:
+            return FileMimeType.OCTET_STREAM
+
+        return FileMimeType.OCTET_STREAM
 
 
 class File(BaseModel):

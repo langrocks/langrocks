@@ -33,6 +33,7 @@ enum ContentMimeType {
   XML = 29; // xml
   CSS = 30; // css
   GIF = 31; // gif
+  OCTET_STREAM = 32; // octet-stream
 }
 
 message Content {
