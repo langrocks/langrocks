@@ -15,6 +15,10 @@ class WebBrowserCommandType(str, Enum):
     SCROLL_X = "SCROLL_X"
     SCROLL_Y = "SCROLL_Y"
     ENTER = "ENTER"
+    KEY = "KEY"
+    CURSOR_POSITION = "CURSOR_POSITION"
+    MOUSE_MOVE = "MOUSE_MOVE"
+    SCREENSHOT = "SCREENSHOT"
 
     def __str__(self):
         return self.value

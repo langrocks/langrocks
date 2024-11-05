@@ -51,6 +51,10 @@ enum WebBrowserCommandType {
   SCROLL_X = 6; // scroll horizontal
   SCROLL_Y = 7; // scroll vertical
   ENTER = 8; // enter
+  KEY = 9; // press key
+  MOUSE_MOVE = 10; // move mouse
+  SCREENSHOT = 11; // screenshot
+  CURSOR_POSITION = 12; // cursor position
 }
 
 message WebBrowserCommandOutput {

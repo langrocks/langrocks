@@ -165,3 +165,74 @@ with WebBrowserContextManager("localhost:50051") as web_browser:
     print("\nGetting textarea fields from a page")
     textarea_fields = web_browser.get_textarea_fields_from_page("https://www.google.com")
     print(textarea_fields)
+
+# Test xdotool based commands
+with WebBrowser(
+    "localhost:50051",
+    capture_screenshot=True,
+    html=True,
+    persist_session=True,
+    tags_to_extract=["input", "textarea", "img"],
+) as web_browser:
+    print("\nTesting xdotool based commands")
+
+    # Navigate to test page
+    web_browser.run_command(
+        command=WebBrowserCommand(
+            command_type=WebBrowserCommandType.GOTO,
+            data="https://www.google.com",
+        )
+    )
+
+    # Test cursor position
+    content = web_browser.run_command(
+        command=WebBrowserCommand(
+            command_type=WebBrowserCommandType.CURSOR_POSITION,
+        )
+    )
+    print("Current cursor position:", content.command_outputs[0].output)
+
+    # Test mouse move
+    content = web_browser.run_command(
+        command=WebBrowserCommand(command_type=WebBrowserCommandType.MOUSE_MOVE, data='{"x": 100, "y": 200}')
+    )
+    print("Mouse move result:", content.command_outputs[0].output)
+
+    # Test key press
+    content = web_browser.run_command(
+        command=WebBrowserCommand(command_type=WebBrowserCommandType.KEY, data="Tab")  # Example key press
+    )
+    print("Key press result:", content.command_outputs[0].output)
+
+    # Test typing into specific input field
+    content = web_browser.run_command(
+        command=WebBrowserCommand(
+            command_type=WebBrowserCommandType.TYPE,
+            selector="input[name='q']",  # Google search input
+            data="Hello World",
+        )
+    )
+    print("Typed into search field")
+
+    # Test global typing without selector
+    content = web_browser.run_command(
+        command=WebBrowserCommand(command_type=WebBrowserCommandType.TYPE, data="Global typing")
+    )
+    print("Global typing result:", content.command_outputs[0].output if content.command_outputs else "No output")
+
+    # Test typing with ENTER
+    content = web_browser.run_commands(
+        [
+            WebBrowserCommand(command_type=WebBrowserCommandType.TYPE, selector="input[name='q']", data="Search query"),
+            WebBrowserCommand(command_type=WebBrowserCommandType.ENTER),
+        ]
+    )
+    print("Typed and pressed enter")
+
+    # Test screenshot
+    content = web_browser.run_command(
+        command=WebBrowserCommand(
+            command_type=WebBrowserCommandType.SCREENSHOT,
+        )
+    )
+    print("Screenshot captured, length:", len(content.command_outputs[0].output))

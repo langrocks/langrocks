@@ -1,8 +1,10 @@
 import asyncio
+import base64
 import json
 import logging
 import os
 import random
+import subprocess
 from concurrent import futures
 from typing import Iterator
 
@@ -11,8 +13,12 @@ from playwright.async_api import Page, async_playwright
 from langrocks.common.models.tools_pb2 import (
     CLICK,
     COPY,
+    CURSOR_POSITION,
     ENTER,
     GOTO,
+    KEY,
+    MOUSE_MOVE,
+    SCREENSHOT,
     SCROLL_X,
     SCROLL_Y,
     TERMINATE,
@@ -267,10 +273,24 @@ async def process_web_browser_request(
                     )
                 )
             elif step.type == TYPE:
-                locator = _get_locator(page, step.selector)
-                # Clear before typing
-                await locator.fill("", timeout=1000)
-                await locator.press_sequentially(step.data, timeout=1000)
+                # If the selector is provided, then type in the selector field
+                if step.selector:
+                    locator = _get_locator(page, step.selector)
+                    # Clear before typing
+                    await locator.fill("", timeout=1000)
+                    await locator.press_sequentially(step.data, timeout=1000)
+                else:
+                    # Otherwise, use xdotool to type
+                    process = subprocess.run(["xdotool", "type", step.data], capture_output=True, text=True)
+                    if process.returncode == 0:
+                        outputs.append(
+                            WebBrowserCommandOutput(
+                                index=index,
+                                output=("Successfully typed: {}".format(step.data)),
+                            )
+                        )
+                    else:
+                        errors.append(WebBrowserCommandError(index=index, error=process.stdout))
             elif step.type == SCROLL_X:
                 await page.mouse.wheel(delta_x=int(step.data), delta_y=0)
             elif step.type == SCROLL_Y:
@@ -282,6 +302,56 @@ async def process_web_browser_request(
                     await page.keyboard.press("Enter")
                     # Wait for navigation to complete if any
                     await page.wait_for_timeout(5000)
+            elif step.type == KEY:
+                # Run xdotool in a subprocess and return the output
+                process = subprocess.run(["xdotool", "key", step.data], capture_output=True, text=True)
+                if process.returncode == 0:
+                    outputs.append(
+                        WebBrowserCommandOutput(
+                            index=index,
+                            output=("Successfully pressed key: {}".format(step.data)),
+                        )
+                    )
+                else:
+                    errors.append(WebBrowserCommandError(index=index, error=process.stdout))
+            elif step.type == CURSOR_POSITION:
+                # Run xdotool in a subprocess and return the output as a json string of the form {"x": 100, "y": 200}
+                process = subprocess.run(["xdotool", "getmouselocation"], capture_output=True, text=True)
+                x, y = process.stdout.split("x:")[1].split(" y:")[0], process.stdout.split("y:")[1].split(" screen:")[0]
+                outputs.append(
+                    WebBrowserCommandOutput(
+                        index=index,
+                        output=json.dumps({"x": int(x), "y": int(y)}),
+                    )
+                )
+            elif step.type == MOUSE_MOVE:
+                # Step.data will be a json string with x and y coordinates. We need to parse it and move the mouse
+                try:
+                    data = json.loads(step.data)
+                    process = subprocess.run(
+                        ["xdotool", "mousemove", str(data["x"]), str(data["y"])], capture_output=True, text=True
+                    )
+                    if process.returncode == 0:
+                        outputs.append(
+                            WebBrowserCommandOutput(
+                                index=index,
+                                output=("Successfully moved mouse to x:{}, y:{}".format(data["x"], data["y"])),
+                            )
+                        )
+                    else:
+                        errors.append(WebBrowserCommandError(index=index, error=process.stdout))
+                except Exception as e:
+                    logger.error(f"Failed to parse mouse move data: {step.data}")
+                    errors.append(WebBrowserCommandError(index=index, error=str(e)))
+            elif step.type == SCREENSHOT:
+                # Get the screenshot and return it as a base64 encoded string
+                screenshot = await page.screenshot(type="png")
+                outputs.append(
+                    WebBrowserCommandOutput(
+                        index=index,
+                        output=base64.b64encode(screenshot).decode(),
+                    )
+                )
         except Exception as e:
             logger.exception(e)
             errors.append(WebBrowserCommandError(index=index, error=str(e)))

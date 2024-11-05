@@ -20,6 +20,7 @@ RUN set -ex \
   lmodern \
   wget \
   unzip \
+  xdotool \
   " \
   && seq 1 8 | xargs -I{} mkdir -p /usr/share/man/man{} \
   && apt-get update && apt-get install -y --no-install-recommends $RUN_DEPS \
