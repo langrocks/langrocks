@@ -236,3 +236,53 @@ with WebBrowser(
         )
     )
     print("Screenshot captured, length:", len(content.command_outputs[0].output))
+
+# Test downloads
+with WebBrowser(
+    "localhost:50051",
+    capture_screenshot=True,
+    html=True,
+    persist_session=True,
+    tags_to_extract=["a", "button"],  # Make sure we can find download links
+) as web_browser:
+    print("\nTesting downloads")
+
+    content = web_browser.run_commands(
+        commands=[
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.GOTO,
+                data="https://pypi.org/project/langrocks/#files",
+            ),
+            # Wait for the page to load
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.WAIT,
+                selector=".file",
+            ),
+        ]
+    )
+
+    # Click on a download link (.tar.gz package as an example)
+    content = web_browser.run_commands(
+        commands=[
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.CLICK,
+                selector="a[href$='.tar.gz']",  # Click first link ending with .tar.gz
+            ),
+            # Wait a bit for the download to start and complete
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.WAIT,
+                data="5",  # Wait 5 seconds
+            ),
+        ]
+    )
+
+    if content.downloads:
+        print(f"\nCaptured additional {len(content.downloads)} downloads:")
+        for download in content.downloads:
+            print(f"- Download URL: {download.url}")
+            print(f"  File name: {download.file.name}")
+            print(f"  File type: {download.file.mime_type}")
+            print(f"  File size: {len(download.file.data)} bytes")
+
+    else:
+        print("No additional downloads were captured")

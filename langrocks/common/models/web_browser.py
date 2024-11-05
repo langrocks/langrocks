@@ -4,6 +4,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from langrocks.common.models.files import File
+
 
 class WebBrowserCommandType(str, Enum):
     GOTO = "GOTO"
@@ -19,9 +21,15 @@ class WebBrowserCommandType(str, Enum):
     CURSOR_POSITION = "CURSOR_POSITION"
     MOUSE_MOVE = "MOUSE_MOVE"
     SCREENSHOT = "SCREENSHOT"
+    GET_DOWNLOADS = "GET_DOWNLOADS"
 
     def __str__(self):
         return self.value
+
+
+class WebBrowserDownload(BaseModel):
+    url: str
+    file: File
 
 
 class WebBrowserCommandOutput(BaseModel):
@@ -84,6 +92,7 @@ class WebBrowserContent(BaseModel):
     images: Optional[List[WebBrowserImage]] = None
     command_outputs: Optional[List[WebBrowserCommandOutput]] = None
     command_errors: Optional[List[WebBrowserCommandError]] = None
+    downloads: Optional[List[WebBrowserDownload]] = None
 
     class Config:
         json_encoders = {

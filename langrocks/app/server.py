@@ -134,7 +134,7 @@ def _parse_args():
     parser.add_argument(
         "--allow-browser-downloads",
         type=bool,
-        default=False,
+        default=True,
         help="Allow browser downloads",
         action=argparse.BooleanOptionalAction,
     )

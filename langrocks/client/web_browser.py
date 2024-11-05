@@ -7,6 +7,7 @@ from typing import Iterator, List, Optional
 import grpc
 
 from langrocks.common.models import tools_pb2
+from langrocks.common.models.files import File, FileMimeType
 from langrocks.common.models.tools_pb2_grpc import ToolsStub
 from langrocks.common.models.web_browser import (
     WebBrowserButton,
@@ -15,6 +16,7 @@ from langrocks.common.models.web_browser import (
     WebBrowserCommandOutput,
     WebBrowserCommandType,
     WebBrowserContent,
+    WebBrowserDownload,
     WebBrowserImage,
     WebBrowserInputField,
     WebBrowserLink,
@@ -130,6 +132,13 @@ def convert_proto_to_web_browser_content(
                 error=error.error,
             )
             for error in content.command_errors
+        ],
+        downloads=[
+            WebBrowserDownload(
+                url=download.url,
+                file=File.from_tools_content(download.file),
+            )
+            for download in content.downloads
         ],
     )
 

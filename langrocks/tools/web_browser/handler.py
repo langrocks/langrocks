@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import logging
+import mimetypes
 import os
 import random
 import subprocess
@@ -10,6 +11,7 @@ from typing import Iterator
 
 from playwright.async_api import Page, async_playwright
 
+from langrocks.common.models.files import FileMimeType
 from langrocks.common.models.tools_pb2 import (
     CLICK,
     COPY,
@@ -24,10 +26,12 @@ from langrocks.common.models.tools_pb2 import (
     TERMINATE,
     TYPE,
     WAIT,
+    Content,
     WebBrowserButton,
     WebBrowserCommandError,
     WebBrowserCommandOutput,
     WebBrowserContent,
+    WebBrowserDownload,
     WebBrowserImage,
     WebBrowserInputField,
     WebBrowserLink,
@@ -200,8 +204,50 @@ async def get_browser_content_from_page(
     return content
 
 
+async def process_pending_downloads(downloads_queue: asyncio.Queue, timeout=10.0):
+    if downloads_queue and not downloads_queue.empty():
+        web_browser_downloads = []
+
+        try:
+            while not downloads_queue.empty():
+                download = downloads_queue.get_nowait()
+                logger.info(f"Processing download {download.suggested_filename}")
+
+                try:
+                    # Wait for download with timeout
+                    path = await asyncio.wait_for(download.path(), timeout=timeout)
+                    with open(path, "rb") as f:
+                        web_browser_downloads.append(
+                            WebBrowserDownload(
+                                url=download.url,
+                                file=Content(
+                                    mime_type=FileMimeType(
+                                        mimetypes.guess_type(download.suggested_filename)[0]
+                                    ).to_tools_mime_type(),
+                                    data=f.read(),
+                                    name=download.suggested_filename,
+                                ),
+                            )
+                        )
+                    os.remove(path)
+                    downloads_queue.task_done()
+                except asyncio.TimeoutError:
+                    logger.error(f"Download timeout for {download.suggested_filename}")
+                except Exception as e:
+                    logger.error(f"Failed to process download: {e}")
+
+        except Exception as e:
+            logger.error(f"Error processing downloads queue: {e}")
+
+        return web_browser_downloads
+    return []
+
+
 async def process_web_browser_request(
-    page: Page, utils_js: str, session_config: WebBrowserSessionConfig, request: WebBrowserRequest
+    page: Page,
+    utils_js: str,
+    session_config: WebBrowserSessionConfig,
+    request: WebBrowserRequest,
 ):
     """
     Process a web browser request using Playwright and returns the final output
@@ -410,6 +456,7 @@ class WebBrowserHandler:
         logger.info(f"Using {os.environ['DISPLAY']}")
         session_config = initial_request.session_config
         session_data = session_config.session_data
+        downloads_queue = asyncio.Queue() if self.allow_downloads else None
 
         async with async_playwright() as playwright:
             try:
@@ -466,12 +513,17 @@ class WebBrowserHandler:
                 if not url.startswith("http") and not url.startswith("chrome://"):
                     url = f"https://{url}"
 
+                # If downloads are allowed, then set the download handler
+                if self.allow_downloads and downloads_queue:
+                    page.on("download", lambda download: downloads_queue.put(download))
+
                 # Load the start_url before processing the steps
                 await page.goto(url, wait_until="domcontentloaded")
 
                 content, terminated = await process_web_browser_request(
                     page, self.utils_js, session_config, initial_request
                 )
+                content.downloads.extend(await process_pending_downloads(downloads_queue, timeout=30.0))
 
                 if terminated and session_config.persist_session:
                     session_data = await save_storage_state(context)
@@ -486,6 +538,8 @@ class WebBrowserHandler:
                     content, terminated = await process_web_browser_request(
                         page, self.utils_js, session_config, next_request
                     )
+                    content.downloads.extend(await process_pending_downloads(downloads_queue, timeout=30.0))
+
                     if terminated and session_config.persist_session:
                         session_data = await save_storage_state(context)
                         await context.close()

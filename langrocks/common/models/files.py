@@ -2,7 +2,7 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-from langrocks.common.models.tools_pb2 import ContentMimeType
+from langrocks.common.models.tools_pb2 import Content, ContentMimeType
 
 
 class FileMimeType(str, Enum):
@@ -110,6 +110,75 @@ class FileMimeType(str, Enum):
         else:
             raise ValueError(f"Unknown file mime type: {self}")
 
+    @staticmethod
+    def from_tools_content_mime_type(mime_type: ContentMimeType):
+        if mime_type == ContentMimeType.TEXT:
+            return FileMimeType.TEXT
+        elif mime_type == ContentMimeType.JSON:
+            return FileMimeType.JSON
+        elif mime_type == ContentMimeType.HTML:
+            return FileMimeType.HTML
+        elif mime_type == ContentMimeType.PNG:
+            return FileMimeType.PNG
+        elif mime_type == ContentMimeType.JPEG:
+            return FileMimeType.JPEG
+        elif mime_type == ContentMimeType.SVG:
+            return FileMimeType.SVG
+        elif mime_type == ContentMimeType.PDF:
+            return FileMimeType.PDF
+        elif mime_type == ContentMimeType.LATEX:
+            return FileMimeType.LATEX
+        elif mime_type == ContentMimeType.MARKDOWN:
+            return FileMimeType.MARKDOWN
+        elif mime_type == ContentMimeType.CSV:
+            return FileMimeType.CSV
+        elif mime_type == ContentMimeType.ZIP:
+            return FileMimeType.ZIP
+        elif mime_type == ContentMimeType.TAR:
+            return FileMimeType.TAR
+        elif mime_type == ContentMimeType.GZIP:
+            return FileMimeType.GZIP
+        elif mime_type == ContentMimeType.BZIP2:
+            return FileMimeType.BZIP2
+        elif mime_type == ContentMimeType.XZ:
+            return FileMimeType.XZ
+        elif mime_type == ContentMimeType.DOCX:
+            return FileMimeType.DOCX
+        elif mime_type == ContentMimeType.PPTX:
+            return FileMimeType.PPTX
+        elif mime_type == ContentMimeType.XLSX:
+            return FileMimeType.XLSX
+        elif mime_type == ContentMimeType.DOC:
+            return FileMimeType.DOC
+        elif mime_type == ContentMimeType.PPT:
+            return FileMimeType.PPT
+        elif mime_type == ContentMimeType.XLS:
+            return FileMimeType.XLS
+        elif mime_type == ContentMimeType.C:
+            return FileMimeType.C
+        elif mime_type == ContentMimeType.CPP:
+            return FileMimeType.CPP
+        elif mime_type == ContentMimeType.JAVA:
+            return FileMimeType.JAVA
+        elif mime_type == ContentMimeType.CSHARP:
+            return FileMimeType.CSHARP
+        elif mime_type == ContentMimeType.PYTHON:
+            return FileMimeType.PYTHON
+        elif mime_type == ContentMimeType.RUBY:
+            return FileMimeType.RUBY
+        elif mime_type == ContentMimeType.PHP:
+            return FileMimeType.PHP
+        elif mime_type == ContentMimeType.JAVASCRIPT:
+            return FileMimeType.JAVASCRIPT
+        elif mime_type == ContentMimeType.XML:
+            return FileMimeType.XML
+        elif mime_type == ContentMimeType.CSS:
+            return FileMimeType.CSS
+        elif mime_type == ContentMimeType.GIF:
+            return FileMimeType.GIF
+        else:
+            raise ValueError(f"Unknown file mime type: {mime_type}")
+
 
 class File(BaseModel):
     data: bytes = b""
@@ -120,3 +189,9 @@ class File(BaseModel):
         json_encoders = {
             bytes: lambda v: v.decode(),
         }
+
+    @staticmethod
+    def from_tools_content(content: Content):
+        return File(
+            data=content.data, name=content.name, mime_type=FileMimeType.from_tools_content_mime_type(content.mime_type)
+        )
