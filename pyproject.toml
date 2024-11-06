@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "langrocks"
-version = "0.1.6"
+version = "0.1.7"
 description = "Tools like web browser and code interpreters for LLMs"
 authors = ["ajhai <nitk.ajay@gmail.com>"]
 license = "MIT"
@@ -25,7 +25,7 @@ redis = "^5.0.7"
 
 
 [tool.poetry.group.dev.dependencies]
-grpcio-tools = "^1.65.0"
+grpcio-tools = "^1.65.1"
 
 
 [tool.poetry.group.server.dependencies]
