@@ -56,6 +56,9 @@ enum WebBrowserCommandType {
   MOUSE_MOVE = 10; // move mouse
   SCREENSHOT = 11; // screenshot
   CURSOR_POSITION = 12; // cursor position
+  RIGHT_CLICK = 13; // right click
+  MIDDLE_CLICK = 14; // middle click
+  DOUBLE_CLICK = 15; // double click
 }
 
 message WebBrowserCommandOutput {

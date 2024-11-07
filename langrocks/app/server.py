@@ -171,7 +171,7 @@ def run_server(args, display_pool):
     # Set the health status to SERVING
     health_servicer.set("", health_pb2.HealthCheckResponse.SERVING)
 
-    server.add_insecure_port(f"[::]:{args.port}")
+    server.add_insecure_port(f"[::]:{args.port}", options=[("grpc.max_send_message_length", 100 * 1024 * 1024)])
     server.start()
 
     logger.info(f"Server running at http://[::]:{args.port}")

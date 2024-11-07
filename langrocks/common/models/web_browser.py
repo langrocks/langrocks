@@ -22,6 +22,9 @@ class WebBrowserCommandType(str, Enum):
     MOUSE_MOVE = "MOUSE_MOVE"
     SCREENSHOT = "SCREENSHOT"
     GET_DOWNLOADS = "GET_DOWNLOADS"
+    RIGHT_CLICK = "RIGHT_CLICK"
+    MIDDLE_CLICK = "MIDDLE_CLICK"
+    DOUBLE_CLICK = "DOUBLE_CLICK"
 
     def __str__(self):
         return self.value

@@ -209,6 +209,7 @@ class WebBrowserContextManager:
     def __init__(self, base_url: str = "", path: str = ""):
         self._channel = grpc.insecure_channel(
             f"{base_url}/{path}",
+            options=[("grpc.max_receive_message_length", 100 * 1024 * 1024)],
         )
         self._stub = ToolsStub(self._channel)
 
@@ -390,6 +391,7 @@ class WebBrowser:
 
         self._channel = grpc.insecure_channel(
             url if url else f"{base_url}/{path}",
+            options=[("grpc.max_receive_message_length", 100 * 1024 * 1024)],
         )
         self._stub = ToolsStub(self._channel)
         self._output_session_data = None

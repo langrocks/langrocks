@@ -6,6 +6,7 @@ import mimetypes
 import os
 import random
 import subprocess
+import tempfile
 from concurrent import futures
 from typing import Iterator
 
@@ -16,10 +17,13 @@ from langrocks.common.models.tools_pb2 import (
     CLICK,
     COPY,
     CURSOR_POSITION,
+    DOUBLE_CLICK,
     ENTER,
     GOTO,
     KEY,
+    MIDDLE_CLICK,
     MOUSE_MOVE,
+    RIGHT_CLICK,
     SCREENSHOT,
     SCROLL_X,
     SCROLL_Y,
@@ -297,10 +301,27 @@ async def process_web_browser_request(
                 await page.goto(
                     ((page.url + step.data) if step.data and step.data.startswith("/") else step.data) or page.url,
                 )
-            elif step.type == CLICK:
-                locator = _get_locator(page, step.selector)
-                await locator.click(timeout=2000)
-                await page.wait_for_timeout(200)  # Wait
+            elif step.type in [CLICK, RIGHT_CLICK, MIDDLE_CLICK, DOUBLE_CLICK]:
+                button = {CLICK: "left", RIGHT_CLICK: "right", MIDDLE_CLICK: "middle", DOUBLE_CLICK: "left"}[step.type]
+
+                click_count = 2 if step.type == DOUBLE_CLICK else 1
+                xdotool_button = {CLICK: "1", RIGHT_CLICK: "3", MIDDLE_CLICK: "2", DOUBLE_CLICK: "1"}[step.type]
+
+                if step.selector:
+                    locator = _get_locator(page, step.selector)
+                    await locator.click(button=button, timeout=2000, click_count=click_count)
+                else:
+                    # Use xdotool to click
+                    cmd = ["xdotool", "click", xdotool_button]
+                    if step.type == DOUBLE_CLICK:
+                        cmd.append("2")  # Double click needs 2 count
+                    process = subprocess.run(cmd, capture_output=True, text=True)
+                    if process.returncode == 0:
+                        outputs.append(WebBrowserCommandOutput(index=index, output=f"Successfully clicked"))
+                    else:
+                        errors.append(WebBrowserCommandError(index=index, error=process.stdout))
+                        logger.error(f"Failed to click: {process.stdout}")
+                await page.wait_for_timeout(500)  # Wait for click to complete
             elif step.type == WAIT:
                 timeout = min(
                     int(step.data) * 1000 if step.data else 5000,
@@ -332,7 +353,7 @@ async def process_web_browser_request(
                         outputs.append(
                             WebBrowserCommandOutput(
                                 index=index,
-                                output=("Successfully typed: {}".format(step.data)),
+                                output=(f"Successfully typed: {step.data}"),
                             )
                         )
                     else:
@@ -350,12 +371,14 @@ async def process_web_browser_request(
                     await page.wait_for_timeout(5000)
             elif step.type == KEY:
                 # Run xdotool in a subprocess and return the output
-                process = subprocess.run(["xdotool", "key", step.data], capture_output=True, text=True)
+                process = subprocess.run(
+                    ["xdotool", "key", "--delay", "100", step.data], capture_output=True, text=True
+                )
                 if process.returncode == 0:
                     outputs.append(
                         WebBrowserCommandOutput(
                             index=index,
-                            output=("Successfully pressed key: {}".format(step.data)),
+                            output=(f"Successfully pressed key: {step.data}"),
                         )
                     )
                 else:
@@ -375,13 +398,15 @@ async def process_web_browser_request(
                 try:
                     data = json.loads(step.data)
                     process = subprocess.run(
-                        ["xdotool", "mousemove", str(data["x"]), str(data["y"])], capture_output=True, text=True
+                        ["xdotool", "mousemove", "--sync", str(data["x"]), str(data["y"])],
+                        capture_output=True,
+                        text=True,
                     )
                     if process.returncode == 0:
                         outputs.append(
                             WebBrowserCommandOutput(
                                 index=index,
-                                output=("Successfully moved mouse to x:{}, y:{}".format(data["x"], data["y"])),
+                                output=(f"Successfully moved mouse to x:{data['x']}, y:{data['y']}"),
                             )
                         )
                     else:
@@ -390,14 +415,26 @@ async def process_web_browser_request(
                     logger.error(f"Failed to parse mouse move data: {step.data}")
                     errors.append(WebBrowserCommandError(index=index, error=str(e)))
             elif step.type == SCREENSHOT:
-                # Get the screenshot and return it as a base64 encoded string
-                screenshot = await page.screenshot(type="png")
-                outputs.append(
-                    WebBrowserCommandOutput(
-                        index=index,
-                        output=base64.b64encode(screenshot).decode(),
+                # Use gnome-screenshot to capture screen to temp file
+                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp:
+                    temp_path = temp.name
+
+                process = subprocess.run(["gnome-screenshot", "-f", temp_path], capture_output=True, text=True)
+
+                if process.returncode == 0:
+                    # Read the temp file and encode as base64
+                    with open(temp_path, "rb") as f:
+                        screenshot_data = f.read()
+                    outputs.append(
+                        WebBrowserCommandOutput(
+                            index=index,
+                            output=base64.b64encode(screenshot_data).decode(),
+                        )
                     )
-                )
+                    # Clean up temp file
+                    os.remove(temp_path)
+                else:
+                    errors.append(WebBrowserCommandError(index=index, error=process.stderr))
         except Exception as e:
             logger.exception(e)
             errors.append(WebBrowserCommandError(index=index, error=str(e)))
