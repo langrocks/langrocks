@@ -34,6 +34,11 @@ enum ContentMimeType {
   CSS = 30; // css
   GIF = 31; // gif
   OCTET_STREAM = 32; // octet-stream
+  VIDEO_WEBM = 33; // webm
+  VIDEO_MP4 = 34; // mp4
+  VIDEO_OGG = 35; // ogg
+  AUDIO_WEBM = 36; // webm
+  AUDIO_MP3 = 37; // mp3
 }
 
 message Content {
@@ -165,7 +170,7 @@ enum CodeRunnerState {
 message WebBrowserSession {
   string ws_url = 1; // websocket url to connect to for remote display
   string session_data = 2; // session data to persist
-  bytes video = 3; // video of session
+  repeated Content videos = 3; // videos of session
 }
 
 message WebBrowserRequest {

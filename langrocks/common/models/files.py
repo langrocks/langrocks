@@ -39,6 +39,11 @@ class FileMimeType(str, Enum):
     CSS = "text/css"
     GIF = "image/gif"
     OCTET_STREAM = "application/octet-stream"
+    VIDEO_WEBM = "video/webm"
+    VIDEO_MP4 = "video/mp4"
+    VIDEO_OGG = "video/ogg"
+    AUDIO_WEBM = "audio/webm"
+    AUDIO_MP3 = "audio/mpeg"
 
     def __str__(self):
         return self.value
@@ -110,6 +115,12 @@ class FileMimeType(str, Enum):
             return ContentMimeType.GIF
         elif self == FileMimeType.OCTET_STREAM:
             return ContentMimeType.OCTET_STREAM
+        elif self == FileMimeType.VIDEO_WEBM:
+            return ContentMimeType.VIDEO_WEBM
+        elif self == FileMimeType.VIDEO_MP4:
+            return ContentMimeType.VIDEO_MP4
+        elif self == FileMimeType.VIDEO_OGG:
+            return ContentMimeType.VIDEO_OGG
 
         return ContentMimeType.OCTET_STREAM
 
@@ -181,6 +192,12 @@ class FileMimeType(str, Enum):
             return FileMimeType.GIF
         elif mime_type == ContentMimeType.OCTET_STREAM:
             return FileMimeType.OCTET_STREAM
+        elif mime_type == ContentMimeType.VIDEO_WEBM:
+            return FileMimeType.VIDEO_WEBM
+        elif mime_type == ContentMimeType.VIDEO_MP4:
+            return FileMimeType.VIDEO_MP4
+        elif mime_type == ContentMimeType.VIDEO_OGG:
+            return FileMimeType.VIDEO_OGG
 
         return FileMimeType.OCTET_STREAM
 

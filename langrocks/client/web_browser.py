@@ -151,6 +151,7 @@ def convert_proto_to_web_browser_session(
     return WebBrowserSession(
         ws_url=session.ws_url,
         session_data=session.session_data,
+        videos=session.videos,
     )
 
 
@@ -170,6 +171,7 @@ def convert_web_browser_session_config_to_proto(
         capture_screenshot=config.capture_screenshot,
         interactive=config.interactive,
         annotate=config.annotate,
+        record_video=config.record_video,
         tags_to_extract=config.tags_to_extract,
     )
 
@@ -375,6 +377,7 @@ class WebBrowser:
         persist_session: bool = False,
         capture_screenshot: bool = False,
         interactive: bool = True,
+        record_video: bool = False,
         annotate: bool = False,
         tags_to_extract: List[str] = [],
     ):
@@ -386,6 +389,7 @@ class WebBrowser:
         self.persist_session = persist_session
         self.capture_screenshot = capture_screenshot
         self.interactive = interactive
+        self.record_video = record_video
         self.annotate = annotate
         self.tags_to_extract = tags_to_extract
 
@@ -402,6 +406,8 @@ class WebBrowser:
         self._commands_cv = threading.Condition()
         self._content_cv = threading.Condition()
         self._last_content = None
+        self._videos = []
+        self._videos_event = threading.Event()
 
     def __enter__(self):
         self._response_thread = threading.Thread(target=self._response_iterator)
@@ -436,6 +442,7 @@ class WebBrowser:
                 interactive=self.interactive,
                 annotate=self.annotate,
                 tags_to_extract=self.tags_to_extract,
+                record_video=self.record_video,
             ),
         )
         with self._commands_cv:
@@ -462,6 +469,11 @@ class WebBrowser:
                 if response.HasField("session"):
                     self._output_session_data = response.session.session_data
                     self._wss_url = response.session.ws_url
+
+                    if response.session.videos:
+                        for video in response.session.videos:
+                            self._videos.append(File.from_tools_content(video))
+                        self._videos_event.set()
                 if response.HasField("content"):
                     self._last_content = convert_proto_to_web_browser_content(response.content)
                     self._content_queue.put(self._last_content)
@@ -490,6 +502,13 @@ class WebBrowser:
         Get the session data of the web browser.
         """
         return self._output_session_data
+
+    def get_videos(self) -> List[str]:
+        """
+        Get the videos of the web browser as base64 encoded strings.
+        """
+        self._videos_event.wait(timeout=5)
+        return self._videos
 
     def get_wss_url(self) -> str:
         """

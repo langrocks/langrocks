@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import glob
 import json
 import logging
 import mimetypes
@@ -488,6 +489,7 @@ class WebBrowserHandler:
         initial_request: WebBrowserRequest,
         request_iterator: Iterator[WebBrowserRequest],
         display,
+        record_video_dir: str,
     ):
         os.environ["DISPLAY"] = f'{display["DISPLAY"]}.0'
         logger.info(f"Using {os.environ['DISPLAY']}")
@@ -527,6 +529,7 @@ class WebBrowserHandler:
                         no_viewport=True,
                         ignore_default_args=["--enable-automation"],
                         accept_downloads=self.allow_downloads,
+                        record_video_dir=record_video_dir,
                     )
                 else:
                     context = await playwright.chromium.launch_persistent_context(
@@ -538,6 +541,7 @@ class WebBrowserHandler:
                         no_viewport=True,
                         ignore_default_args=["--enable-automation"],
                         accept_downloads=self.allow_downloads,
+                        record_video_dir=record_video_dir,
                     )
 
                 if session_data:
@@ -635,6 +639,9 @@ class WebBrowserHandler:
         else:
             yield WebBrowserResponse(state=WebBrowserState.RUNNING)
 
+        # Create a temporary directory for video recording
+        record_video_dir = tempfile.mkdtemp() if session_config.record_video else None
+
         # Use ThreadPoolExecutor to run the async function in a separate thread
         with futures.ThreadPoolExecutor(thread_name_prefix="async_tasks") as executor:
             browser_done = False
@@ -654,6 +661,7 @@ class WebBrowserHandler:
                     initial_request=initial_request,
                     request_iterator=request_iterator,
                     display=display,
+                    record_video_dir=record_video_dir,
                 ):
                     await content_queue.put((content, terminated, session_data))
 
@@ -675,6 +683,29 @@ class WebBrowserHandler:
                         element = content_queue.get_nowait()
                         if element is SENTINAL:
                             browser_done = True
+
+                            # If video recording is enabled, then look for the video files and return it
+                            if record_video_dir:
+                                video_files = glob.glob(os.path.join(record_video_dir, "*.webm"))
+                                if video_files:
+                                    videos = []
+                                    for video_file in video_files:
+                                        with open(video_file, "rb") as f:
+                                            file_name = os.path.basename(video_file)
+                                            mime_type = mimetypes.guess_type(video_file)[0]
+                                            videos.append(
+                                                Content(
+                                                    data=f.read(),
+                                                    name=file_name,
+                                                    mime_type=FileMimeType(mime_type).to_tools_mime_type(),
+                                                )
+                                            )
+                                        os.remove(video_file)
+
+                                    yield WebBrowserResponse(
+                                        session=WebBrowserSession(videos=videos),
+                                        state=WebBrowserState.TERMINATED,
+                                    )
                             break
 
                         content, terminated, session_data = element

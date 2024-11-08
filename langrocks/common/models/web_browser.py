@@ -129,7 +129,7 @@ class WebBrowserState(str, Enum):
 class WebBrowserSession(BaseModel):
     ws_url: Optional[str] = None
     session_data: Optional[str] = None
-    video: Optional[bytes] = None
+    videos: Optional[List[File]] = None
 
     class Config:
         json_encoders = {

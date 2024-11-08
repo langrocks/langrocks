@@ -286,3 +286,21 @@ with WebBrowser(
 
     else:
         print("No additional downloads were captured")
+
+
+# Test video recording
+with WebBrowser(
+    "localhost:50051", capture_screenshot=True, html=True, persist_session=True, record_video=True
+) as web_browser:
+    print("\nTesting video recording")
+
+    content = web_browser.run_commands(
+        commands=[
+            WebBrowserCommand(command_type=WebBrowserCommandType.GOTO, data="https://www.google.com"),
+            WebBrowserCommand(command_type=WebBrowserCommandType.TERMINATE),
+        ]
+    )
+
+    # Get the video
+    videos = web_browser.get_videos()
+    print(f"Received {len(videos)} videos")
