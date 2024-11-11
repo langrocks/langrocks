@@ -31,7 +31,9 @@ from langrocks.common.models.tools_pb2 import (
     TERMINATE,
     TYPE,
     WAIT,
+    BoundingBox,
     Content,
+    Point,
     WebBrowserButton,
     WebBrowserCommandError,
     WebBrowserCommandOutput,
@@ -116,6 +118,14 @@ async def get_browser_content_from_page(
                     WebBrowserButton(
                         text=button["text"],
                         selector=button["tag"],
+                        midpoint=Point(x=button["midpoint"]["x"], y=button["midpoint"]["y"]),
+                        box=BoundingBox(
+                            top=button["boundingBox"]["top"],
+                            left=button["boundingBox"]["left"],
+                            width=button["boundingBox"]["width"],
+                            height=button["boundingBox"]["height"],
+                        ),
+                        inViewport=button["inViewport"],
                     ),
                 )
 
@@ -126,6 +136,14 @@ async def get_browser_content_from_page(
                     WebBrowserButton(
                         text=label["text"],
                         selector=label["tag"],
+                        midpoint=Point(x=label["midpoint"]["x"], y=label["midpoint"]["y"]),
+                        box=BoundingBox(
+                            top=label["boundingBox"]["top"],
+                            left=label["boundingBox"]["left"],
+                            width=label["boundingBox"]["width"],
+                            height=label["boundingBox"]["height"],
+                        ),
+                        inViewport=label["inViewport"],
                     ),
                 )
 
@@ -136,6 +154,14 @@ async def get_browser_content_from_page(
                         WebBrowserButton(
                             text=div["text"],
                             selector=div["tag"],
+                            midpoint=Point(x=div["midpoint"]["x"], y=div["midpoint"]["y"]),
+                            box=BoundingBox(
+                                top=div["boundingBox"]["top"],
+                                left=div["boundingBox"]["left"],
+                                width=div["boundingBox"]["width"],
+                                height=div["boundingBox"]["height"],
+                            ),
+                            inViewport=div["inViewport"],
                         ),
                     )
 
@@ -145,6 +171,14 @@ async def get_browser_content_from_page(
                     WebBrowserInputField(
                         text=input["text"],
                         selector=input["tag"],
+                        midpoint=Point(x=input["midpoint"]["x"], y=input["midpoint"]["y"]),
+                        box=BoundingBox(
+                            top=input["boundingBox"]["top"],
+                            left=input["boundingBox"]["left"],
+                            width=input["boundingBox"]["width"],
+                            height=input["boundingBox"]["height"],
+                        ),
+                        inViewport=input["inViewport"],
                     ),
                 )
 
@@ -154,6 +188,14 @@ async def get_browser_content_from_page(
                     WebBrowserSelectField(
                         text=select["text"],
                         selector=select["tag"],
+                        midpoint=Point(x=select["midpoint"]["x"], y=select["midpoint"]["y"]),
+                        box=BoundingBox(
+                            top=select["boundingBox"]["top"],
+                            left=select["boundingBox"]["left"],
+                            width=select["boundingBox"]["width"],
+                            height=select["boundingBox"]["height"],
+                        ),
+                        inViewport=select["inViewport"],
                     ),
                 )
 
@@ -163,6 +205,14 @@ async def get_browser_content_from_page(
                     WebBrowserTextAreaField(
                         text=textarea["text"],
                         selector=textarea["tag"],
+                        midpoint=Point(x=textarea["midpoint"]["x"], y=textarea["midpoint"]["y"]),
+                        box=BoundingBox(
+                            top=textarea["boundingBox"]["top"],
+                            left=textarea["boundingBox"]["left"],
+                            width=textarea["boundingBox"]["width"],
+                            height=textarea["boundingBox"]["height"],
+                        ),
+                        inViewport=textarea["inViewport"],
                     ),
                 )
 
@@ -174,6 +224,14 @@ async def get_browser_content_from_page(
                         WebBrowserTextAreaField(
                             text=div["text"],
                             selector=div["tag"],
+                            midpoint=Point(x=div["midpoint"]["x"], y=div["midpoint"]["y"]),
+                            box=BoundingBox(
+                                top=div["boundingBox"]["top"],
+                                left=div["boundingBox"]["left"],
+                                width=div["boundingBox"]["width"],
+                                height=div["boundingBox"]["height"],
+                            ),
+                            inViewport=div["inViewport"],
                         ),
                     )
 
@@ -184,6 +242,14 @@ async def get_browser_content_from_page(
                         text=link["text"],
                         selector=link["tag"],
                         url=link["url"],
+                        midpoint=Point(x=link["midpoint"]["x"], y=link["midpoint"]["y"]),
+                        box=BoundingBox(
+                            top=link["boundingBox"]["top"],
+                            left=link["boundingBox"]["left"],
+                            width=link["boundingBox"]["width"],
+                            height=link["boundingBox"]["height"],
+                        ),
+                        inViewport=link["inViewport"],
                     ),
                 )
 
@@ -194,6 +260,14 @@ async def get_browser_content_from_page(
                         text=image["text"],
                         selector=image["tag"],
                         src=image["src"],
+                        midpoint=Point(x=image["midpoint"]["x"], y=image["midpoint"]["y"]),
+                        box=BoundingBox(
+                            top=image["boundingBox"]["top"],
+                            left=image["boundingBox"]["left"],
+                            width=image["boundingBox"]["width"],
+                            height=image["boundingBox"]["height"],
+                        ),
+                        inViewport=image["inViewport"],
                     ),
                 )
 

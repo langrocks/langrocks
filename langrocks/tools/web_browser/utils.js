@@ -150,6 +150,20 @@
     return false;
   };
 
+  const isElementinViewport = (el) => {
+    // Check if the element is in the viewport
+    const rect = el.getBoundingClientRect();
+    if (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= window.innerHeight &&
+      rect.right <= window.innerWidth
+    ) {
+      return true;
+    }
+    return false;
+  };
+
   window["addTags"] = (selectors = ["text"], annotate = false) => {
     // Clear existing tags
     window["clearTags"]();
@@ -173,15 +187,27 @@
           if (annotate) {
             addBoundingBox(element, tag);
           }
-
+          const rect = element.getBoundingClientRect();
           return {
-            text: element.textContent.trim() || element.alt || element.title || "",
+            text:
+              element.textContent.trim() || element.alt || element.title || "",
             type: element.type || "",
             url: element.href || "",
             tag: tag,
             clickable: isClickable(element),
             editable: isEditable(element),
             src: element.src || "",
+            inViewport: isElementinViewport(element),
+            boundingBox: {
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height,
+            },
+            midpoint: {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2,
+            },
           };
         })
         .filter((el) => el !== null);
@@ -191,16 +217,31 @@
       text: text,
     };
 
-    output["buttons"] = selectors.includes("button") ? getAllElements("button", annotate) : [];
-    output["inputs"] = selectors.includes("input") ? getAllElements("input", annotate) : [];
-    output["selects"] = selectors.includes("select") ? getAllElements("select", annotate) : [];
-    output["textareas"] = selectors.includes("textarea") ? getAllElements("textarea", annotate) : [];
-    output["links"] = selectors.includes("a") ? getAllElements("a", annotate) : [];
-    output["labels"] = selectors.includes("label") ? getAllElements("label", annotate) : [];
-    output["divs"] = selectors.includes("div") ? getAllElements("div", annotate) : [];
-    output["images"] = selectors.includes("img") ? getAllElements("img", annotate) : [];
+    output["buttons"] = selectors.includes("button")
+      ? getAllElements("button", annotate)
+      : [];
+    output["inputs"] = selectors.includes("input")
+      ? getAllElements("input", annotate)
+      : [];
+    output["selects"] = selectors.includes("select")
+      ? getAllElements("select", annotate)
+      : [];
+    output["textareas"] = selectors.includes("textarea")
+      ? getAllElements("textarea", annotate)
+      : [];
+    output["links"] = selectors.includes("a")
+      ? getAllElements("a", annotate)
+      : [];
+    output["labels"] = selectors.includes("label")
+      ? getAllElements("label", annotate)
+      : [];
+    output["divs"] = selectors.includes("div")
+      ? getAllElements("div", annotate)
+      : [];
+    output["images"] = selectors.includes("img")
+      ? getAllElements("img", annotate)
+      : [];
 
     return output;
   };
-
 };
