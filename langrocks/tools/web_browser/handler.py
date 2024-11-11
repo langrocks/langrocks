@@ -507,6 +507,10 @@ class WebBrowserHandler:
                     else None
                 )
 
+                url = session_config.init_url or "chrome://newtab"
+                if not url.startswith("http") and not url.startswith("chrome://"):
+                    url = f"https://{url}"
+
                 # Configure browser launch options with uBlock if available
                 browser_args = [
                     "--disable-blink-features=AutomationControlled",
@@ -530,6 +534,7 @@ class WebBrowserHandler:
                         ignore_default_args=["--enable-automation"],
                         accept_downloads=self.allow_downloads,
                         record_video_dir=record_video_dir,
+                        base_url=url,
                     )
                 else:
                     context = await playwright.chromium.launch_persistent_context(
@@ -542,24 +547,18 @@ class WebBrowserHandler:
                         ignore_default_args=["--enable-automation"],
                         accept_downloads=self.allow_downloads,
                         record_video_dir=record_video_dir,
+                        base_url=url,
                     )
 
                 if session_data:
                     await context.add_cookies(session_data["cookies"])
 
                 await context.add_init_script(BROWSER_INIT_SCRIPT)
-                page = await context.new_page()
-
-                url = session_config.init_url or "chrome://newtab"
-                if not url.startswith("http") and not url.startswith("chrome://"):
-                    url = f"https://{url}"
+                page = context.pages[0] if context.pages else await context.new_page()
 
                 # If downloads are allowed, then set the download handler
                 if self.allow_downloads and downloads_queue:
                     page.on("download", lambda download: downloads_queue.put(download))
-
-                # Load the start_url before processing the steps
-                await page.goto(url, wait_until="domcontentloaded")
 
                 content, terminated = await process_web_browser_request(
                     page, self.utils_js, session_config, initial_request
