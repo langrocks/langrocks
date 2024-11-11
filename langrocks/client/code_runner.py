@@ -98,11 +98,14 @@ def convert_proto_to_code_runner_session(
 
 class CodeRunnerContextManager:
     def __init__(self, base_url: str = "", path: str = ""):
-        self._channel = grpc.insecure_channel(
-            base_url,
-        )
-        self._stub = ToolsStub(self._channel)
-        self._session = None
+        try:
+            self._channel = grpc.insecure_channel(
+                base_url,
+            )
+            self._stub = ToolsStub(self._channel)
+            self._session = None
+        except Exception as e:
+            raise ConnectionError(f"Error connecting to gRPC server: {str(e)}")
 
     def __enter__(self):
         return self

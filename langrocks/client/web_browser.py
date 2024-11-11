@@ -393,11 +393,22 @@ class WebBrowser:
         self.annotate = annotate
         self.tags_to_extract = tags_to_extract
 
-        self._channel = grpc.insecure_channel(
-            url if url else f"{base_url}/{path}",
-            options=[("grpc.max_receive_message_length", 100 * 1024 * 1024)],
-        )
-        self._stub = ToolsStub(self._channel)
+        try:
+            self._channel = grpc.insecure_channel(
+                url if url else f"{base_url}/{path}",
+                options=[("grpc.max_receive_message_length", 100 * 1024 * 1024)],
+            )
+            # Try to establish connection by creating stub
+            self._stub = ToolsStub(self._channel)
+            # Test connection by making a simple unary call
+            grpc.channel_ready_future(self._channel).result(timeout=5)
+        except grpc.FutureTimeoutError:
+            self._channel.close()
+            raise ConnectionError(f"Could not connect to gRPC server at {url if url else f'{base_url}/{path}'}")
+        except Exception as e:
+            self._channel.close()
+            raise ConnectionError(f"Error connecting to gRPC server: {str(e)}")
+
         self._output_session_data = None
         self._wss_url = None
         self._state = None
@@ -488,8 +499,13 @@ class WebBrowser:
                 with self._content_cv:
                     self._content_cv.notify_all()
         except Exception as e:
-            logger.error(f"Error in response iterator: {e}")
             self._state = WebBrowserState.TERMINATED
+            # Add error to content queue to unblock __enter__
+            self._content_queue.put(None)
+            with self._content_cv:
+                self._content_cv.notify_all()
+            # Re-raise the exception to bubble it up
+            raise ConnectionError(f"Error in response iterator: {e}")
 
     def get_state(self) -> WebBrowserState:
         """
