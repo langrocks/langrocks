@@ -47,6 +47,18 @@ message Content {
   string name = 3; // name of content
 }
 
+message BoundingBox {
+  float top = 1; // top of box
+  float left = 2; // left of box
+  float width = 3; // width of box
+  float height = 4; // height of box
+}
+
+message Point {
+  float x = 1; // x coordinate
+  float y = 2; // y coordinate
+}
+
 enum WebBrowserCommandType {
   GOTO = 0; // go to url
   TERMINATE = 1; // terminate session
@@ -85,33 +97,51 @@ message WebBrowserCommand {
 message WebBrowserButton {
   string selector = 1; // selector of button
   string text = 2; // text of button
+  Point midpoint = 3; // midpoint of button element
+  BoundingBox box = 4; // bounding box of button element
+  bool inViewport = 5; // is button in viewport
 }
 
 message WebBrowserInputField {
   string selector = 1; // selector of input
   string text = 2; // text of input
+  Point midpoint = 3; // midpoint of input element
+  BoundingBox box = 4; // bounding box of input element
+  bool inViewport = 5; // is input in viewport
 }
 
 message WebBrowserSelectField {
   string selector = 1; // selector of select
   string text = 2; // text of select
+  Point midpoint = 3; // midpoint of select element
+  BoundingBox box = 4; // bounding box of select element
+  bool inViewport = 5; // is select in viewport
 }
 
 message WebBrowserTextAreaField {
   string selector = 1; // selector of textarea
   string text = 2; // text of textarea
+  Point midpoint = 3; // midpoint of textarea element
+  BoundingBox box = 4; // bounding box of textarea element
+  bool inViewport = 5; // is textarea in viewport
 }
 
 message WebBrowserLink {
   string selector = 1; // selector of link
   string text = 2; // text of link
   string url = 3; // url of link
+  Point midpoint = 4; // midpoint of link element
+  BoundingBox box = 5; // bounding box of link element
+  bool inViewport = 6; // is link in viewport
 }
 
 message WebBrowserImage {
   string selector = 1; // selector of image  
   string text = 2; // alt text of image
   string src = 3; // src of image
+  Point midpoint = 4; // midpoint of image element
+  BoundingBox box = 5; // bounding box of image element
+  bool inViewport = 6; // is image in viewport
 }
 
 message WebBrowserDownload {
