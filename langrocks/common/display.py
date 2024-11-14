@@ -139,6 +139,7 @@ class VirtualDisplayPool:
                     "-q",
                     "-cursor",
                     "most",
+                    "-multiptr",
                     "-rfbport",
                     str(display["rfb_port"]),
                 ],
