@@ -510,6 +510,9 @@ async def process_web_browser_request(
                     os.remove(temp_path)
                 else:
                     errors.append(WebBrowserCommandError(index=index, error=process.stderr))
+            else:
+                logger.error(f"Unknown command: {step.type}")
+                errors.append(WebBrowserCommandError(index=index, error=f"Unknown command: {step.type}"))
         except Exception as e:
             logger.exception(e)
             errors.append(WebBrowserCommandError(index=index, error=str(e)))
@@ -608,7 +611,6 @@ class WebBrowserHandler:
                         ignore_default_args=["--enable-automation"],
                         accept_downloads=self.allow_downloads,
                         record_video_dir=record_video_dir,
-                        base_url=url,
                     )
                 else:
                     context = await playwright.chromium.launch_persistent_context(
@@ -621,7 +623,6 @@ class WebBrowserHandler:
                         ignore_default_args=["--enable-automation"],
                         accept_downloads=self.allow_downloads,
                         record_video_dir=record_video_dir,
-                        base_url=url,
                     )
 
                 if session_data:
@@ -629,6 +630,9 @@ class WebBrowserHandler:
 
                 await context.add_init_script(BROWSER_INIT_SCRIPT)
                 page = context.pages[0] if context.pages else await context.new_page()
+
+                # Navigate to the initial URL
+                await page.goto(url, wait_until="domcontentloaded")
 
                 # If downloads are allowed, then set the download handler
                 if self.allow_downloads and downloads_queue:
