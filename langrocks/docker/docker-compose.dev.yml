@@ -3,6 +3,14 @@ services:
   web_browser:
     image: langrocks-web-browser:latest
     ports:
-      - 3000:80
+      - 50051:50051
+      - 50052:50052
+      - 50053:50053
     env_file:
       - .env.dev
+  app:
+    image: langrocks-app:latest
+    ports:
+      - 3002:80
+    depends_on:
+      - web_browser
