@@ -3,6 +3,7 @@ import logging
 import threading
 from queue import Queue
 from typing import Iterator, List, Optional
+from urllib.parse import urlparse
 
 import grpc
 
@@ -373,6 +374,11 @@ class Computer:
             self._channel.close()
             raise ConnectionError(f"Error connecting to gRPC server: {str(e)}")
 
+        if base_url:
+            self._base_url = base_url
+        else:
+            self._base_url = urlparse(url).netloc if url and url.startswith("http") else url.split("/")[0]
+
         self._output_session_data = None
         self._wss_url = None
         self._state = None
@@ -441,6 +447,7 @@ class Computer:
     def _response_iterator(self):
         try:
             for response in self._stub.GetComputer(self._request_iterator()):
+                logger.info(f"Received response: {response}")
                 if response.HasField("session"):
                     self._output_session_data = response.session.session_data
                     self._wss_url = response.session.ws_url
@@ -463,6 +470,7 @@ class Computer:
                 with self._content_cv:
                     self._content_cv.notify_all()
         except Exception as e:
+            logger.exception(f"Error in response iterator: {e}")
             self._state = ComputerState.COMPUTER_TERMINATED
             # Add error to content queue to unblock __enter__
             self._content_queue.put(None)
@@ -495,6 +503,22 @@ class Computer:
         Get the WebSocket URL of the web browser for interactive sessions.
         """
         return self._wss_url
+
+    def get_remote_viewer_url(self) -> str:
+        """
+        Parse and return the viewable URL of the web browser by converting _wss_url to a URL that can be used to view the web browser remotely.
+        """
+        parsed_url = urlparse(self._wss_url)
+        # Extract token from query parameters
+        token = parsed_url.query.replace("token=", "")
+        # Split username:password from netloc
+        auth = parsed_url.netloc.split("@")[0]
+        username, password = auth.split(":")
+        # Get hostname and port
+        hostname = parsed_url.netloc.split("@")[1].split(":")[0]
+        port = parsed_url.netloc.split(":")[-1]
+
+        return f"http://{self._base_url}/remote?wsProtocol={parsed_url.scheme}&username={username}&password={password}&hostname={hostname}&port={port}&path={parsed_url.path}&token={token}"
 
     def run_commands(
         self,
