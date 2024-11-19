@@ -16,22 +16,17 @@ from playwright.async_api import Page, async_playwright
 from langrocks.client.code_runner import Content
 from langrocks.common.models.files import FileMimeType
 from langrocks.common.models.tools_pb2 import (
-    CLICK,
-    COPY,
-    CURSOR_POSITION,
-    DOUBLE_CLICK,
-    ENTER,
-    GOTO,
-    KEY,
-    MIDDLE_CLICK,
-    MOUSE_MOVE,
-    RIGHT_CLICK,
-    SCREENSHOT,
-    SCROLL_X,
-    SCROLL_Y,
-    TERMINATE,
-    TYPE,
-    WAIT,
+    COMPUTER_CURSOR_POSITION,
+    COMPUTER_DOUBLE_CLICK,
+    COMPUTER_KEY,
+    COMPUTER_LEFT_CLICK,
+    COMPUTER_MIDDLE_CLICK,
+    COMPUTER_MOUSE_MOVE,
+    COMPUTER_RIGHT_CLICK,
+    COMPUTER_SCREENSHOT,
+    COMPUTER_TERMINATE,
+    COMPUTER_TYPE,
+    COMPUTER_WAIT,
     BoundingBox,
     ComputerContent,
     ComputerRequest,
@@ -371,18 +366,25 @@ async def process_web_browser_request(
 
     for index, step in zip(range(len(steps)), steps):
         try:
-            if step.type == TERMINATE:
+            if step.type == COMPUTER_TERMINATE:
                 terminated = True
                 break
-            elif step.type == GOTO:
-                await page.goto(
-                    ((page.url + step.data) if step.data and step.data.startswith("/") else step.data) or page.url,
-                )
-            elif step.type in [CLICK, RIGHT_CLICK, MIDDLE_CLICK, DOUBLE_CLICK]:
-                button = {CLICK: "left", RIGHT_CLICK: "right", MIDDLE_CLICK: "middle", DOUBLE_CLICK: "left"}[step.type]
 
-                click_count = 2 if step.type == DOUBLE_CLICK else 1
-                xdotool_button = {CLICK: "1", RIGHT_CLICK: "3", MIDDLE_CLICK: "2", DOUBLE_CLICK: "1"}[step.type]
+            elif step.type in [COMPUTER_LEFT_CLICK, COMPUTER_RIGHT_CLICK, COMPUTER_MIDDLE_CLICK, COMPUTER_DOUBLE_CLICK]:
+                button = {
+                    COMPUTER_LEFT_CLICK: "left",
+                    COMPUTER_RIGHT_CLICK: "right",
+                    COMPUTER_MIDDLE_CLICK: "middle",
+                    COMPUTER_DOUBLE_CLICK: "left",
+                }[step.type]
+
+                click_count = 2 if step.type == COMPUTER_DOUBLE_CLICK else 1
+                xdotool_button = {
+                    COMPUTER_LEFT_CLICK: "1",
+                    COMPUTER_RIGHT_CLICK: "3",
+                    COMPUTER_MIDDLE_CLICK: "2",
+                    COMPUTER_DOUBLE_CLICK: "1",
+                }[step.type]
 
                 if step.selector:
                     locator = _get_locator(page, step.selector)
@@ -390,7 +392,7 @@ async def process_web_browser_request(
                 else:
                     # Use xdotool to click
                     cmd = ["xdotool", "click", xdotool_button]
-                    if step.type == DOUBLE_CLICK:
+                    if step.type == COMPUTER_DOUBLE_CLICK:
                         cmd.append("2")  # Double click needs 2 count
                     process = subprocess.run(cmd, capture_output=True, text=True)
                     if process.returncode == 0:
@@ -399,7 +401,7 @@ async def process_web_browser_request(
                         errors.append(WebBrowserCommandError(index=index, error=process.stdout))
                         logger.error(f"Failed to click: {process.stdout}")
                 await page.wait_for_timeout(500)  # Wait for click to complete
-            elif step.type == WAIT:
+            elif step.type == COMPUTER_WAIT:
                 timeout = min(
                     int(step.data) * 1000 if step.data else 5000,
                     10000,
@@ -408,15 +410,7 @@ async def process_web_browser_request(
                     await page.wait_for_timeout(timeout)
                 else:
                     await page.wait_for_selector(step.selector, timeout=timeout)
-            elif step.type == COPY:
-                results = await page.query_selector_all(step.selector or "body")
-                outputs.append(
-                    WebBrowserCommandOutput(
-                        index=index,
-                        output="".join([await result.inner_text() for result in results]),
-                    )
-                )
-            elif step.type == TYPE:
+            elif step.type == COMPUTER_TYPE:
                 # If the selector is provided, then type in the selector field
                 if step.selector:
                     locator = _get_locator(page, step.selector)
@@ -435,18 +429,7 @@ async def process_web_browser_request(
                         )
                     else:
                         errors.append(WebBrowserCommandError(index=index, error=process.stdout))
-            elif step.type == SCROLL_X:
-                await page.mouse.wheel(delta_x=int(step.data), delta_y=0)
-            elif step.type == SCROLL_Y:
-                await page.mouse.wheel(delta_x=0, delta_y=int(step.data))
-            elif step.type == ENTER:
-                if await page.evaluate(
-                    '() => { return (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA"); }',
-                ):
-                    await page.keyboard.press("Enter")
-                    # Wait for navigation to complete if any
-                    await page.wait_for_timeout(5000)
-            elif step.type == KEY:
+            elif step.type == COMPUTER_KEY:
                 # Run xdotool in a subprocess and return the output
                 process = subprocess.run(
                     ["xdotool", "key", "--delay", "100", step.data], capture_output=True, text=True
@@ -460,7 +443,7 @@ async def process_web_browser_request(
                     )
                 else:
                     errors.append(WebBrowserCommandError(index=index, error=process.stdout))
-            elif step.type == CURSOR_POSITION:
+            elif step.type == COMPUTER_CURSOR_POSITION:
                 # Run xdotool in a subprocess and return the output as a json string of the form {"x": 100, "y": 200}
                 process = subprocess.run(["xdotool", "getmouselocation"], capture_output=True, text=True)
                 x, y = process.stdout.split("x:")[1].split(" y:")[0], process.stdout.split("y:")[1].split(" screen:")[0]
@@ -470,7 +453,7 @@ async def process_web_browser_request(
                         output=json.dumps({"x": int(x), "y": int(y)}),
                     )
                 )
-            elif step.type == MOUSE_MOVE:
+            elif step.type == COMPUTER_MOUSE_MOVE:
                 # Step.data will be a json string with x and y coordinates. We need to parse it and move the mouse
                 try:
                     data = json.loads(step.data)
@@ -491,7 +474,7 @@ async def process_web_browser_request(
                 except Exception as e:
                     logger.error(f"Failed to parse mouse move data: {step.data}")
                     errors.append(WebBrowserCommandError(index=index, error=str(e)))
-            elif step.type == SCREENSHOT:
+            elif step.type == COMPUTER_SCREENSHOT:
                 # Use gnome-screenshot to capture screen to temp file
                 with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp:
                     temp_path = temp.name
@@ -519,7 +502,7 @@ async def process_web_browser_request(
             pass
 
     # If there was only TERMINATE command, then skip getting the content
-    if not steps or (len(steps) == 1 and steps[0].type == TERMINATE):
+    if not steps or (len(steps) == 1 and steps[0].type == COMPUTER_TERMINATE):
         return ComputerContent(), terminated
 
     content = await get_browser_content_from_page(page, utils_js, session_config)

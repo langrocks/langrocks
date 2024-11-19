@@ -8,20 +8,14 @@ from langrocks.common.models.files import File
 
 
 class ComputerCommandType(str, Enum):
-    GOTO = "GOTO"
     TERMINATE = "TERMINATE"
     WAIT = "WAIT"
-    CLICK = "CLICK"
-    COPY = "COPY"
+    LEFT_CLICK = "LEFT_CLICK"
     TYPE = "TYPE"
-    SCROLL_X = "SCROLL_X"
-    SCROLL_Y = "SCROLL_Y"
-    ENTER = "ENTER"
     KEY = "KEY"
     CURSOR_POSITION = "CURSOR_POSITION"
     MOUSE_MOVE = "MOUSE_MOVE"
     SCREENSHOT = "SCREENSHOT"
-    GET_DOWNLOADS = "GET_DOWNLOADS"
     RIGHT_CLICK = "RIGHT_CLICK"
     MIDDLE_CLICK = "MIDDLE_CLICK"
     DOUBLE_CLICK = "DOUBLE_CLICK"

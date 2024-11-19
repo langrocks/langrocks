@@ -275,37 +275,13 @@ class ComputerContextManager:
         """
         Get the HTML content of a page.
         """
-        return self.run_commands(
-            commands=[
-                ComputerCommand(
-                    command_type=ComputerCommandType.GOTO,
-                    data=url,
-                ),
-                ComputerCommand(
-                    command_type=ComputerCommandType.WAIT,
-                    data="body",
-                ),
-            ],
-            config=ComputerSessionConfig(html=True),
-        ).html
+        return ""
 
     def get_text_from_page(self, url: str) -> str:
         """
         Get the text content of a page.
         """
-        return self.run_commands(
-            commands=[
-                ComputerCommand(
-                    command_type=ComputerCommandType.GOTO,
-                    data=url,
-                ),
-                ComputerCommand(
-                    command_type=ComputerCommandType.WAIT,
-                    data="body",
-                ),
-            ],
-            config=ComputerSessionConfig(text=True),
-        ).text
+        return ""
 
     def get_elements_from_page(
         self, url: str, selectors: str = ["a", "img", "button", "input", "textarea", "select"]
@@ -313,19 +289,7 @@ class ComputerContextManager:
         """
         Get matching elements from a page.
         """
-        return self.run_commands(
-            commands=[
-                ComputerCommand(
-                    command_type=ComputerCommandType.GOTO,
-                    data=url,
-                ),
-                ComputerCommand(
-                    command_type=ComputerCommandType.WAIT,
-                    selector="body",
-                ),
-            ],
-            config=ComputerSessionConfig(tags_to_extract=selectors),
-        )
+        return []
 
     def get_images_from_page(self, url: str) -> List[ComputerImage]:
         """
@@ -577,19 +541,7 @@ class Computer:
         """
         Navigate to a URL.
         """
-        return self.run_commands(
-            commands=[
-                ComputerCommand(
-                    command_type=ComputerCommandType.GOTO,
-                    data=url,
-                ),
-                ComputerCommand(
-                    command_type=ComputerCommandType.WAIT,
-                    selector="body",
-                    data=str(wait_timeout),
-                ),
-            ]
-        )
+        pass
 
     def wait(self, selector: str, wait_timeout: int = 2000) -> ComputerContent:
         """
@@ -609,7 +561,7 @@ class Computer:
         """
         return self.run_command(
             command=ComputerCommand(
-                command_type=ComputerCommandType.CLICK,
+                command_type=ComputerCommandType.LEFT_CLICK,
                 selector=selector,
             ),
         )

@@ -78,6 +78,21 @@ enum WebBrowserCommandType {
   DOUBLE_CLICK = 15; // double click
 }
 
+enum ComputerCommandType {
+  COMPUTER_TERMINATE = 0; // terminate session
+  COMPUTER_KEY = 1; // press key
+  COMPUTER_TYPE = 2; // type text
+  COMPUTER_MOUSE_MOVE = 3; // move mouse
+  COMPUTER_LEFT_CLICK = 4; // left click
+  COMPUTER_LEFT_CLICK_DRAG = 5; // left click drag
+  COMPUTER_RIGHT_CLICK = 6; // right click
+  COMPUTER_MIDDLE_CLICK = 7; // middle click
+  COMPUTER_DOUBLE_CLICK = 8; // double click
+  COMPUTER_SCREENSHOT = 9; // screenshot
+  COMPUTER_CURSOR_POSITION = 10; // cursor position
+  COMPUTER_WAIT = 11; // wait
+}
+
 message WebBrowserCommandOutput {
   int32 index = 1; // index of command
   string output = 2; // output of command
@@ -96,7 +111,7 @@ message WebBrowserCommand {
 
 
 message ComputerCommand {
-  WebBrowserCommandType type = 1; // command type
+  ComputerCommandType type = 1; // command type
   string selector = 2; // selector to use
   string data = 3; // command data
 }
