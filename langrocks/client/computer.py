@@ -554,7 +554,7 @@ class Computer:
         # Send a terminate command
         self.run_command(
             command=ComputerCommand(
-                command_type=ComputerCommandType.TERMINATE,
+                command_type=ComputerCommandType.COMPUTER_TERMINATE,
             ),
         )
 
@@ -573,7 +573,7 @@ class Computer:
         """
         return self.run_command(
             command=ComputerCommand(
-                command_type=ComputerCommandType.WAIT,
+                command_type=ComputerCommandType.COMPUTER_WAIT,
                 selector=selector,
                 data=str(wait_timeout),
             ),
