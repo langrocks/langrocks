@@ -40,3 +40,6 @@ run-web-browser-container:
 run-app-container:
 	@echo "Running app container..."
 	docker run -it --rm --cap-add=SYS_ADMIN --name $(APP_IMAGE_NAME) -p 3002:80 $(APP_IMAGE_NAME) /bin/sh
+
+run-dev-containers:
+	docker compose -f langrocks/docker/docker-compose.dev.yml --env-file langrocks/docker/.env.dev up
