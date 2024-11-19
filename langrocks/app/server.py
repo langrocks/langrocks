@@ -138,6 +138,12 @@ def _parse_args():
         help="Allow browser downloads",
         action=argparse.BooleanOptionalAction,
     )
+    parser.add_argument(
+        "--websockify-dir",
+        type=str,
+        help="Directory for websockify web files",
+        default="/usr/share/www/html",
+    )
     return parser.parse_args()
 
 
@@ -216,7 +222,7 @@ def main():
                 "websockify",
                 f"{args.wss_port}",
                 "--web",
-                "/usr/share/www/html",
+                f"{args.websockify_dir}",
                 "--token-plugin=langrocks.common.websockify.token.TokenRedis",
                 f'--token-source={args.redis_host}:{args.redis_port}:{args.redis_db}{f":{args.redis_password}" if args.redis_password else ""}',
                 "-v",
