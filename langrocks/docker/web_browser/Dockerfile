@@ -40,6 +40,7 @@ COPY poetry.lock /code/poetry.lock
 COPY README.md /code/README.md
 COPY langrocks/common /code/langrocks/common
 COPY langrocks/tools/code_interpreter /code/langrocks/tools/code_interpreter
+COPY langrocks/tools/computer /code/langrocks/tools/computer
 COPY langrocks/tools/file_operations /code/langrocks/tools/file_operations
 COPY langrocks/tools/web_browser /code/langrocks/tools/web_browser
 COPY langrocks/tools/handler.py /code/langrocks/tools/handler.py

@@ -6,11 +6,14 @@ from langrocks.common.display import VirtualDisplayPool
 from langrocks.common.models.tools_pb2 import (
     CodeRunnerRequest,
     CodeRunnerResponse,
+    ComputerRequest,
+    ComputerResponse,
     WebBrowserRequest,
     WebBrowserResponse,
 )
 from langrocks.common.models.tools_pb2_grpc import ToolsServicer
 from langrocks.tools.code_interpreter.runner import CodeRunner
+from langrocks.tools.computer.handler import ComputerHandler
 from langrocks.tools.file_operations.file_converter import FileConverterHandler
 from langrocks.tools.web_browser.handler import WebBrowserHandler
 
@@ -36,6 +39,9 @@ class ToolHandler(ToolsServicer):
         )
         self.file_converter_handler = FileConverterHandler()
         self.code_runner = CodeRunner(kernel_manager=kernel_manager)
+        self.computer = ComputerHandler(
+            display_pool, wss_secure, wss_hostname, wss_port, ublock_path, allow_browser_downloads
+        )
 
     def GetWebBrowser(
         self,
@@ -53,3 +59,6 @@ class ToolHandler(ToolsServicer):
         context: ServicerContext,
     ) -> Iterator[CodeRunnerResponse]:
         return self.code_runner.process(request_iterator)
+
+    def GetComputer(self, request_iterator: Iterator[ComputerRequest], context) -> Iterator[ComputerResponse]:
+        return self.computer.get_computer(request_iterator=request_iterator)
