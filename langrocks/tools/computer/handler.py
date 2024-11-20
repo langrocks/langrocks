@@ -366,6 +366,7 @@ async def process_web_browser_request(
 
     for index, step in zip(range(len(steps)), steps):
         try:
+
             if step.type == COMPUTER_TERMINATE:
                 terminated = True
                 break
@@ -411,29 +412,23 @@ async def process_web_browser_request(
                 else:
                     await page.wait_for_selector(step.selector, timeout=timeout)
             elif step.type == COMPUTER_TYPE:
-                # If the selector is provided, then type in the selector field
-                if step.selector:
-                    locator = _get_locator(page, step.selector)
-                    # Clear before typing
-                    await locator.fill("", timeout=1000)
-                    await locator.press_sequentially(step.data, timeout=1000)
-                else:
-                    # Otherwise, use xdotool to type
-                    process = subprocess.run(["xdotool", "type", step.data], capture_output=True, text=True)
-                    if process.returncode == 0:
-                        outputs.append(
-                            WebBrowserCommandOutput(
-                                index=index,
-                                output=(f"Successfully typed: {step.data}"),
-                            )
+                process = subprocess.run(["xdotool", "type", step.data], capture_output=True, text=True)
+                logger.info(f"Typed output: {process}")
+                if process.returncode == 0:
+                    outputs.append(
+                        WebBrowserCommandOutput(
+                            index=index,
+                            output=(f"Successfully typed: {step.data}"),
                         )
-                    else:
-                        errors.append(WebBrowserCommandError(index=index, error=process.stdout))
+                    )
+                else:
+                    errors.append(WebBrowserCommandError(index=index, error=process.stdout))
             elif step.type == COMPUTER_KEY:
                 # Run xdotool in a subprocess and return the output
                 process = subprocess.run(
                     ["xdotool", "key", "--delay", "100", step.data], capture_output=True, text=True
                 )
+                logger.info(f"Keyed output: {process}")
                 if process.returncode == 0:
                     outputs.append(
                         WebBrowserCommandOutput(
@@ -661,8 +656,6 @@ class ComputerHandler:
         # Get the first request from the client
         initial_request = next(request_iterator)
         session_config = initial_request.session_config
-
-        logger.info(f"Received initial request: {initial_request}")
 
         if not session_config:
             logger.error("No session config provided")
