@@ -86,6 +86,19 @@ jobs:
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
+      # Add Node.js setup and web app build steps before building the App Docker image
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Build web app
+        run: |
+          cd langrocks/app/web
+          npm install
+          npm run build
+          cd ../../..
+
       # Extract metadata for app image
       - name: Extract Docker metadata for app
         id: meta-app
