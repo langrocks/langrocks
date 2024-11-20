@@ -38,6 +38,7 @@ RUN mkdir /code
 COPY pyproject.toml /code/pyproject.toml
 COPY poetry.lock /code/poetry.lock
 COPY README.md /code/README.md
+COPY langrocks/cli.py /code/langrocks/cli.py
 COPY langrocks/common /code/langrocks/common
 COPY langrocks/tools/code_interpreter /code/langrocks/tools/code_interpreter
 COPY langrocks/tools/computer /code/langrocks/tools/computer

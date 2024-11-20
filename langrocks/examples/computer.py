@@ -1,9 +1,9 @@
-from langrocks.client.computer import Computer, ComputerContextManager
+from langrocks.client.computer import Computer
 from langrocks.common.models.computer import ComputerCommand, ComputerCommandType
 
 # Test Computer visit a page in browser
-with Computer("localhost:50051", interactive=True) as computer:
-    # print(computer.get_remote_viewer_url())
+with Computer("localhost:3000", interactive=True) as computer:
+    print(computer.get_remote_viewer_url())
     content = computer.run_commands(
         [
             ComputerCommand(command_type=ComputerCommandType.COMPUTER_KEY, data="ctrl+l"),
@@ -16,8 +16,8 @@ with Computer("localhost:50051", interactive=True) as computer:
     )
 
 # Test Mouse move
-with Computer("localhost:50051", interactive=True) as computer:
-    # print(computer.get_remote_viewer_url())
+with Computer("localhost:3000", interactive=True) as computer:
+    print(computer.get_remote_viewer_url())
     coodinates = '{"x": 100, "y": 200}'
     content = computer.run_commands(
         [
