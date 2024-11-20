@@ -101,14 +101,6 @@ class ComputerTool(BaseAnthropicTool):
         assert self.width and self.height, "WIDTH, HEIGHT must be set"
         self._session_data = None
 
-        self._computer = Computer(
-            url=self._url,
-            base_url=self._base_url,
-            interactive=True,
-            capture_screenshot=True,
-            session_data=self._session_data,
-        )
-
     async def __call__(
         self,
         *,
@@ -119,7 +111,13 @@ class ComputerTool(BaseAnthropicTool):
     ):
         await asyncio.sleep(0.01)
 
-        with self._computer as computer:
+        with Computer(
+            url=self._url,
+            base_url=self._base_url,
+            interactive=True,
+            capture_screenshot=True,
+            session_data=self._session_data,
+        ) as computer:
             if action in ("mouse_move", "left_click_drag"):
                 if coordinate is None:
                     raise ToolError(f"coordinate is required for {action}")
@@ -138,6 +136,7 @@ class ComputerTool(BaseAnthropicTool):
                             command_type=ComputerCommandType.COMPUTER_MOUSE_MOVE, data=json.dumps(coordinates)
                         ),
                     )
+                    self._session_data = computer.get_session_data()
                     return ToolResult(
                         output=response.command_outputs[-1].output if response.command_outputs else None,
                         error=response.command_errors[-1].error if response.command_errors else None,
@@ -149,6 +148,7 @@ class ComputerTool(BaseAnthropicTool):
                             command_type=ComputerCommandType.COMPUTER_LEFT_CLICK_DRAG, data=json.dumps(coordinates)
                         ),
                     )
+                    self._session_data = computer.get_session_data()
                     return ToolResult(
                         output=response.command_outputs[-1].output if response.command_outputs else None,
                         error=response.command_errors[-1].error if response.command_errors else None,
@@ -166,6 +166,7 @@ class ComputerTool(BaseAnthropicTool):
                     response = computer.run_command(
                         ComputerCommand(command_type=ComputerCommandType.COMPUTER_KEY, data=text),
                     )
+                    self._session_data = computer.get_session_data()
                     return ToolResult(
                         output=response.command_outputs[-1].output if response.command_outputs else None,
                         error=response.command_errors[-1].error if response.command_errors else None,
@@ -176,6 +177,7 @@ class ComputerTool(BaseAnthropicTool):
                     for chunk in chunks(text, TYPING_GROUP_SIZE):
                         commands.append(ComputerCommand(command_type=ComputerCommandType.COMPUTER_TYPE, data=chunk))
                     response = computer.run_commands(commands)
+                    self._session_data = computer.get_session_data()
                     return ToolResult(
                         output=(
                             "".join(output.output or "" for output in response.command_outputs)
@@ -207,6 +209,7 @@ class ComputerTool(BaseAnthropicTool):
                     response = computer.run_command(
                         ComputerCommand(command_type=ComputerCommandType.COMPUTER_SCREENSHOT)
                     )
+                    self._session_data = computer.get_session_data()
                     return ToolResult(
                         output=response.command_outputs[-1].output if response.command_outputs else None,
                         error=response.command_errors[-1].error if response.command_errors else None,
@@ -216,6 +219,7 @@ class ComputerTool(BaseAnthropicTool):
                     response = computer.run_command(
                         ComputerCommand(command_type=ComputerCommandType.COMPUTER_CURSOR_POSITION)
                     )
+                    self._session_data = computer.get_session_data()
                     return ToolResult(
                         output=response.command_outputs[-1].output if response.command_outputs else None,
                         error=response.command_errors[-1].error if response.command_errors else None,
@@ -225,6 +229,7 @@ class ComputerTool(BaseAnthropicTool):
                     response = computer.run_command(
                         ComputerCommand(command_type=ComputerCommandType.COMPUTER_LEFT_CLICK)
                     )
+                    self._session_data = computer.get_session_data()
                     return ToolResult(
                         output=response.command_outputs[-1].output if response.command_outputs else None,
                         error=response.command_errors[-1].error if response.command_errors else None,
@@ -234,6 +239,7 @@ class ComputerTool(BaseAnthropicTool):
                     response = computer.run_command(
                         ComputerCommand(command_type=ComputerCommandType.COMPUTER_RIGHT_CLICK)
                     )
+                    self._session_data = computer.get_session_data()
                     return ToolResult(
                         output=response.command_outputs[-1].output if response.command_outputs else None,
                         error=response.command_errors[-1].error if response.command_errors else None,
@@ -243,6 +249,7 @@ class ComputerTool(BaseAnthropicTool):
                     response = computer.run_command(
                         ComputerCommand(command_type=ComputerCommandType.COMPUTER_MIDDLE_CLICK)
                     )
+                    self._session_data = computer.get_session_data()
                     return ToolResult(
                         output=response.command_outputs[-1].output if response.command_outputs else None,
                         error=response.command_errors[-1].error if response.command_errors else None,
@@ -252,6 +259,7 @@ class ComputerTool(BaseAnthropicTool):
                     response = computer.run_command(
                         ComputerCommand(command_type=ComputerCommandType.COMPUTER_DOUBLE_CLICK)
                     )
+                    self._session_data = computer.get_session_data()
                     return ToolResult(
                         output=response.command_outputs[-1].output if response.command_outputs else None,
                         error=response.command_errors[-1].error if response.command_errors else None,
