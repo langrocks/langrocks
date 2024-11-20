@@ -20,6 +20,7 @@ from langrocks.common.models.tools_pb2 import (
     COMPUTER_DOUBLE_CLICK,
     COMPUTER_KEY,
     COMPUTER_LEFT_CLICK,
+    COMPUTER_LEFT_CLICK_DRAG,
     COMPUTER_MIDDLE_CLICK,
     COMPUTER_MOUSE_MOVE,
     COMPUTER_RIGHT_CLICK,
@@ -468,6 +469,37 @@ async def process_web_browser_request(
                         errors.append(WebBrowserCommandError(index=index, error=process.stdout))
                 except Exception as e:
                     logger.error(f"Failed to parse mouse move data: {step.data}")
+                    errors.append(WebBrowserCommandError(index=index, error=str(e)))
+            elif step.type == COMPUTER_LEFT_CLICK_DRAG:
+                # Step.data will be a json string with x and y coordinates. We need to parse it and move the mouse
+                try:
+                    data = json.loads(step.data)
+                    process = subprocess.run(
+                        [
+                            "xdotool",
+                            "mousedown",
+                            "1",
+                            "mousemove",
+                            "--sync",
+                            str(data["x"]),
+                            str(data["y"]),
+                            "mouseup",
+                            "1",
+                        ],
+                        capture_output=True,
+                        text=True,
+                    )
+                    if process.returncode == 0:
+                        outputs.append(
+                            WebBrowserCommandOutput(
+                                index=index,
+                                output=(f"Successfully left click dragged to x:{data['x']}, y:{data['y']}"),
+                            )
+                        )
+                    else:
+                        errors.append(WebBrowserCommandError(index=index, error=process.stdout))
+                except Exception as e:
+                    logger.error(f"Failed to parse left click drag data: {step.data}")
                     errors.append(WebBrowserCommandError(index=index, error=str(e)))
             elif step.type == COMPUTER_SCREENSHOT:
                 # Use gnome-screenshot to capture screen to temp file

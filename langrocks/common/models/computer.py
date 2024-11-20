@@ -11,6 +11,7 @@ class ComputerCommandType(str, Enum):
     COMPUTER_TERMINATE = "COMPUTER_TERMINATE"
     COMPUTER_WAIT = "COMPUTER_WAIT"
     COMPUTER_LEFT_CLICK = "COMPUTER_LEFT_CLICK"
+    COMPUTER_LEFT_CLICK_DRAG = "COMPUTER_LEFT_CLICK_DRAG"
     COMPUTER_TYPE = "COMPUTER_TYPE"
     COMPUTER_KEY = "COMPUTER_KEY"
     COMPUTER_CURSOR_POSITION = "COMPUTER_CURSOR_POSITION"
@@ -90,6 +91,12 @@ class ComputerContent(BaseModel):
     command_outputs: Optional[List[ComputerCommandOutput]] = None
     command_errors: Optional[List[ComputerCommandError]] = None
     downloads: Optional[List[ComputerDownload]] = None
+
+    @property
+    def b64_screenshot(self):
+        import base64
+
+        return base64.b64encode(self.screenshot).decode() if self.screenshot else None
 
     class Config:
         json_encoders = {
