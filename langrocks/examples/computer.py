@@ -27,3 +27,16 @@ with Computer("localhost:3000", interactive=True) as computer:
         ]
     )
     print(content.command_outputs[-1].output == coodinates)
+
+computer = Computer("localhost:3000", interactive=True).start()
+print(computer.get_remote_viewer_url())
+coodinates = '{"x": 100, "y": 200}'
+content = computer.run_commands(
+    [
+        ComputerCommand(command_type=ComputerCommandType.COMPUTER_MOUSE_MOVE, data=coodinates),
+        ComputerCommand(command_type=ComputerCommandType.COMPUTER_WAIT, data="1"),
+        ComputerCommand(command_type=ComputerCommandType.COMPUTER_CURSOR_POSITION),
+    ]
+)
+print(content.command_outputs[-1].output == coodinates)
+computer.close()

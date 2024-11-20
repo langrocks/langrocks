@@ -560,6 +560,26 @@ class Computer:
 
         return self.get_session_data()
 
+    def start(self):
+        self._response_thread = threading.Thread(target=self._response_iterator)
+        self._response_thread.start()
+
+        # Pull the first response from the content queue
+        with self._content_cv:
+            while self._content_queue.empty():
+                self._content_cv.wait()
+            self._content_queue.get()
+
+        return self
+
+    def close(self):
+        logger.info("Closing the Computer client")
+        if self._state == ComputerState.COMPUTER_RUNNING:
+            self.terminate()
+
+        self._response_thread.join()
+        self._channel.close()
+
     # Helper functions
     def goto(self, url: str, wait_timeout: int = 2000) -> ComputerContent:
         """
