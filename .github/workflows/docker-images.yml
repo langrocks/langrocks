@@ -10,6 +10,7 @@ env:
   REGISTRY: ghcr.io
   ORG: langrocks
   IMAGE_NAME_WEB_BROWSER: "langrocks-web-browser"
+  IMAGE_NAME_APP: "langrocks-app"
 
 jobs:
   build:
@@ -83,4 +84,33 @@ jobs:
           DIGEST: ${{ steps.build-and-push-web-browser.outputs.digest }}
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      # Extract metadata for app image
+      - name: Extract Docker metadata for app
+        id: meta-app
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME_APP }}
+
+      # Build and push App Docker image
+      - name: Build and push App Docker image
+        id: build-and-push-app
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-app.outputs.tags }}
+          labels: ${{ steps.meta-app.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          file: langrocks/docker/app/Dockerfile
+          platforms: linux/amd64,linux/arm64
+
+      # Sign the app image
+      - name: Sign the published App Docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          TAGS: ${{ steps.meta-app.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push-app.outputs.digest }}
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
