@@ -79,6 +79,23 @@ Object.defineProperty(Object.getPrototypeOf(navigator), 'webdriver', {
 logger = logging.getLogger(__name__)
 
 
+def capture_screeshot():
+    screenshot_data = None
+    # Use gnome-screenshot to capture screen to temp file
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp:
+        temp_path = temp.name
+
+    process = subprocess.run(["gnome-screenshot", "-f", temp_path], capture_output=True, text=True)
+
+    if process.returncode == 0:
+        # Read the temp file and encode as base64
+        with open(temp_path, "rb") as f:
+            screenshot_data = f.read()
+        # Clean up temp file
+        os.remove(temp_path)
+    return screenshot_data
+
+
 async def get_browser_content_from_page(
     page: Page, utils_js: str, session_config: ComputerSessionConfig
 ) -> ComputerContent:
@@ -271,7 +288,7 @@ async def get_browser_content_from_page(
 
         # Add a screenshot
         if session_config.capture_screenshot:
-            content.screenshot = await page.screenshot(type="png")
+            content.screenshot = capture_screeshot()
 
         # Clear tags
         await page.evaluate('window["clearTags"]();')
@@ -532,7 +549,9 @@ async def process_web_browser_request(
     if not steps or (len(steps) == 1 and steps[0].type == COMPUTER_TERMINATE):
         return ComputerContent(), terminated
 
-    content = await get_browser_content_from_page(page, utils_js, session_config)
+    content = ComputerContent()
+    if session_config.capture_screenshot:
+        content.screenshot = capture_screeshot()
     for error in errors:
         content.command_errors.append(error)
 

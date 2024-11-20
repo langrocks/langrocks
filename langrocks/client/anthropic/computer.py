@@ -95,11 +95,23 @@ class ComputerTool(BaseAnthropicTool):
         super().__init__()
         self._url = kwargs.get("url") or os.getenv("URL")
         self._base_url = kwargs.get("base_url") or os.getenv("BASE_URL")
-        self.width = kwargs.get("width") or int(os.getenv("WIDTH") or 0)
-        self.height = kwargs.get("height") or int(os.getenv("HEIGHT") or 0)
-
+        self.width = kwargs.get("width") or int(os.getenv("WIDTH", "1024"))
+        self.height = kwargs.get("height") or int(os.getenv("HEIGHT", "720"))
         assert self.width and self.height, "WIDTH, HEIGHT must be set"
         self._session_data = None
+        self._computer = Computer(
+            url=self._url,
+            base_url=self._base_url,
+            interactive=True,
+            capture_screenshot=True,
+            session_data=self._session_data,
+        ).start()
+
+    def __del__(self):
+        self._computer.close()
+
+    def remote_viewer_url(self) -> str:
+        return self._computer.get_remote_viewer_url()
 
     async def __call__(
         self,
@@ -111,159 +123,142 @@ class ComputerTool(BaseAnthropicTool):
     ):
         await asyncio.sleep(0.01)
 
-        with Computer(
-            url=self._url,
-            base_url=self._base_url,
-            interactive=True,
-            capture_screenshot=True,
-            session_data=self._session_data,
-        ) as computer:
-            if action in ("mouse_move", "left_click_drag"):
-                if coordinate is None:
-                    raise ToolError(f"coordinate is required for {action}")
-                if text is not None:
-                    raise ToolError(f"text is not accepted for {action}")
-                if not isinstance(coordinate, list) or len(coordinate) != 2:
-                    raise ToolError(f"{coordinate} must be a tuple of length 2")
-                if not all(isinstance(i, int) and i >= 0 for i in coordinate):
-                    raise ToolError(f"{coordinate} must be a tuple of non-negative ints")
+        computer = self._computer
+        if action in ("mouse_move", "left_click_drag"):
+            if coordinate is None:
+                raise ToolError(f"coordinate is required for {action}")
+            if text is not None:
+                raise ToolError(f"text is not accepted for {action}")
+            if not isinstance(coordinate, list) or len(coordinate) != 2:
+                raise ToolError(f"{coordinate} must be a tuple of length 2")
+            if not all(isinstance(i, int) and i >= 0 for i in coordinate):
+                raise ToolError(f"{coordinate} must be a tuple of non-negative ints")
 
-                x, y = coordinate[0], coordinate[1]
-                if action == "mouse_move":
-                    coordinates = {"x": x, "y": y}
-                    response = computer.run_command(
-                        ComputerCommand(
-                            command_type=ComputerCommandType.COMPUTER_MOUSE_MOVE, data=json.dumps(coordinates)
-                        ),
-                    )
-                    self._session_data = computer.get_session_data()
-                    return ToolResult(
-                        output=response.command_outputs[-1].output if response.command_outputs else None,
-                        error=response.command_errors[-1].error if response.command_errors else None,
-                        base64_image=response.b64_screenshot,
-                    )
-                elif action == "left_click_drag":
-                    response = computer.run_command(
-                        ComputerCommand(
-                            command_type=ComputerCommandType.COMPUTER_LEFT_CLICK_DRAG, data=json.dumps(coordinates)
-                        ),
-                    )
-                    self._session_data = computer.get_session_data()
-                    return ToolResult(
-                        output=response.command_outputs[-1].output if response.command_outputs else None,
-                        error=response.command_errors[-1].error if response.command_errors else None,
-                        base64_image=response.b64_screenshot,
-                    )
-            if action in ("key", "type"):
-                if text is None:
-                    raise ToolError(f"text is required for {action}")
-                if coordinate is not None:
-                    raise ToolError(f"coordinate is not accepted for {action}")
-                if not isinstance(text, str):
-                    raise ToolError(output=f"{text} must be a string")
+            x, y = coordinate[0], coordinate[1]
+            if action == "mouse_move":
+                coordinates = {"x": x, "y": y}
+                response = computer.run_command(
+                    ComputerCommand(command_type=ComputerCommandType.COMPUTER_MOUSE_MOVE, data=json.dumps(coordinates)),
+                )
+                self._session_data = computer.get_session_data()
+                return ToolResult(
+                    output=response.command_outputs[-1].output if response.command_outputs else None,
+                    error=response.command_errors[-1].error if response.command_errors else None,
+                    base64_image=response.b64_screenshot,
+                )
+            elif action == "left_click_drag":
+                response = computer.run_command(
+                    ComputerCommand(
+                        command_type=ComputerCommandType.COMPUTER_LEFT_CLICK_DRAG, data=json.dumps(coordinates)
+                    ),
+                )
+                self._session_data = computer.get_session_data()
+                return ToolResult(
+                    output=response.command_outputs[-1].output if response.command_outputs else None,
+                    error=response.command_errors[-1].error if response.command_errors else None,
+                    base64_image=response.b64_screenshot,
+                )
+        if action in ("key", "type"):
+            if text is None:
+                raise ToolError(f"text is required for {action}")
+            if coordinate is not None:
+                raise ToolError(f"coordinate is not accepted for {action}")
+            if not isinstance(text, str):
+                raise ToolError(output=f"{text} must be a string")
 
-                if action == "key":
-                    response = computer.run_command(
-                        ComputerCommand(command_type=ComputerCommandType.COMPUTER_KEY, data=text),
-                    )
-                    self._session_data = computer.get_session_data()
-                    return ToolResult(
-                        output=response.command_outputs[-1].output if response.command_outputs else None,
-                        error=response.command_errors[-1].error if response.command_errors else None,
-                        base64_image=response.b64_screenshot,
-                    )
-                elif action == "type":
-                    commands = []
-                    for chunk in chunks(text, TYPING_GROUP_SIZE):
-                        commands.append(ComputerCommand(command_type=ComputerCommandType.COMPUTER_TYPE, data=chunk))
-                    response = computer.run_commands(commands)
-                    self._session_data = computer.get_session_data()
-                    return ToolResult(
-                        output=(
-                            "".join(output.output or "" for output in response.command_outputs)
-                            if response.command_outputs
-                            else None
-                        ),
-                        error=(
-                            "".join(error.error or "" for error in response.command_errors)
-                            if response.command_errors
-                            else None
-                        ),
-                        base64_image=response.b64_screenshot,
-                    )
+            if action == "key":
+                response = computer.run_command(
+                    ComputerCommand(command_type=ComputerCommandType.COMPUTER_KEY, data=text),
+                )
+                self._session_data = computer.get_session_data()
+                return ToolResult(
+                    output=response.command_outputs[-1].output if response.command_outputs else None,
+                    error=response.command_errors[-1].error if response.command_errors else None,
+                    base64_image=response.b64_screenshot,
+                )
+            elif action == "type":
+                commands = []
+                for chunk in chunks(text, TYPING_GROUP_SIZE):
+                    commands.append(ComputerCommand(command_type=ComputerCommandType.COMPUTER_TYPE, data=chunk))
+                response = computer.run_commands(commands)
+                self._session_data = computer.get_session_data()
+                return ToolResult(
+                    output=(
+                        "".join(output.output or "" for output in response.command_outputs)
+                        if response.command_outputs
+                        else None
+                    ),
+                    error=(
+                        "".join(error.error or "" for error in response.command_errors)
+                        if response.command_errors
+                        else None
+                    ),
+                    base64_image=response.b64_screenshot,
+                )
 
-            if action in (
-                "left_click",
-                "right_click",
-                "double_click",
-                "middle_click",
-                "screenshot",
-                "cursor_position",
-            ):
-                if text is not None:
-                    raise ToolError(f"text is not accepted for {action}")
-                if coordinate is not None:
-                    raise ToolError(f"coordinate is not accepted for {action}")
+        if action in (
+            "left_click",
+            "right_click",
+            "double_click",
+            "middle_click",
+            "screenshot",
+            "cursor_position",
+        ):
+            if text is not None:
+                raise ToolError(f"text is not accepted for {action}")
+            if coordinate is not None:
+                raise ToolError(f"coordinate is not accepted for {action}")
 
-                if action == "screenshot":
-                    response = computer.run_command(
-                        ComputerCommand(command_type=ComputerCommandType.COMPUTER_SCREENSHOT)
-                    )
-                    self._session_data = computer.get_session_data()
-                    return ToolResult(
-                        output=response.command_outputs[-1].output if response.command_outputs else None,
-                        error=response.command_errors[-1].error if response.command_errors else None,
-                        base64_image=response.b64_screenshot,
-                    )
-                elif action == "cursor_position":
-                    response = computer.run_command(
-                        ComputerCommand(command_type=ComputerCommandType.COMPUTER_CURSOR_POSITION)
-                    )
-                    self._session_data = computer.get_session_data()
-                    return ToolResult(
-                        output=response.command_outputs[-1].output if response.command_outputs else None,
-                        error=response.command_errors[-1].error if response.command_errors else None,
-                        base64_image=response.b64_screenshot,
-                    )
-                elif action == "left_click":
-                    response = computer.run_command(
-                        ComputerCommand(command_type=ComputerCommandType.COMPUTER_LEFT_CLICK)
-                    )
-                    self._session_data = computer.get_session_data()
-                    return ToolResult(
-                        output=response.command_outputs[-1].output if response.command_outputs else None,
-                        error=response.command_errors[-1].error if response.command_errors else None,
-                        base64_image=response.b64_screenshot,
-                    )
-                elif action == "right_click":
-                    response = computer.run_command(
-                        ComputerCommand(command_type=ComputerCommandType.COMPUTER_RIGHT_CLICK)
-                    )
-                    self._session_data = computer.get_session_data()
-                    return ToolResult(
-                        output=response.command_outputs[-1].output if response.command_outputs else None,
-                        error=response.command_errors[-1].error if response.command_errors else None,
-                        base64_image=response.b64_screenshot,
-                    )
-                elif action == "middle_click":
-                    response = computer.run_command(
-                        ComputerCommand(command_type=ComputerCommandType.COMPUTER_MIDDLE_CLICK)
-                    )
-                    self._session_data = computer.get_session_data()
-                    return ToolResult(
-                        output=response.command_outputs[-1].output if response.command_outputs else None,
-                        error=response.command_errors[-1].error if response.command_errors else None,
-                        base64_image=response.b64_screenshot,
-                    )
-                elif action == "double_click":
-                    response = computer.run_command(
-                        ComputerCommand(command_type=ComputerCommandType.COMPUTER_DOUBLE_CLICK)
-                    )
-                    self._session_data = computer.get_session_data()
-                    return ToolResult(
-                        output=response.command_outputs[-1].output if response.command_outputs else None,
-                        error=response.command_errors[-1].error if response.command_errors else None,
-                        base64_image=response.b64_screenshot,
-                    )
+            if action == "screenshot":
+                response = computer.run_command(ComputerCommand(command_type=ComputerCommandType.COMPUTER_SCREENSHOT))
+                computer.run_command(ComputerCommand(command_type=ComputerCommandType.COMPUTER_WAIT, data="10"))
+                self._session_data = computer.get_session_data()
+                return ToolResult(
+                    output=response.command_outputs[-1].output if response.command_outputs else None,
+                    error=response.command_errors[-1].error if response.command_errors else None,
+                    base64_image=response.b64_screenshot,
+                )
+            elif action == "cursor_position":
+                response = computer.run_command(
+                    ComputerCommand(command_type=ComputerCommandType.COMPUTER_CURSOR_POSITION)
+                )
+                self._session_data = computer.get_session_data()
+                return ToolResult(
+                    output=response.command_outputs[-1].output if response.command_outputs else None,
+                    error=response.command_errors[-1].error if response.command_errors else None,
+                    base64_image=response.b64_screenshot,
+                )
+            elif action == "left_click":
+                response = computer.run_command(ComputerCommand(command_type=ComputerCommandType.COMPUTER_LEFT_CLICK))
+                self._session_data = computer.get_session_data()
+                return ToolResult(
+                    output=response.command_outputs[-1].output if response.command_outputs else None,
+                    error=response.command_errors[-1].error if response.command_errors else None,
+                    base64_image=response.b64_screenshot,
+                )
+            elif action == "right_click":
+                response = computer.run_command(ComputerCommand(command_type=ComputerCommandType.COMPUTER_RIGHT_CLICK))
+                self._session_data = computer.get_session_data()
+                return ToolResult(
+                    output=response.command_outputs[-1].output if response.command_outputs else None,
+                    error=response.command_errors[-1].error if response.command_errors else None,
+                    base64_image=response.b64_screenshot,
+                )
+            elif action == "middle_click":
+                response = computer.run_command(ComputerCommand(command_type=ComputerCommandType.COMPUTER_MIDDLE_CLICK))
+                self._session_data = computer.get_session_data()
+                return ToolResult(
+                    output=response.command_outputs[-1].output if response.command_outputs else None,
+                    error=response.command_errors[-1].error if response.command_errors else None,
+                    base64_image=response.b64_screenshot,
+                )
+            elif action == "double_click":
+                response = computer.run_command(ComputerCommand(command_type=ComputerCommandType.COMPUTER_DOUBLE_CLICK))
+                self._session_data = computer.get_session_data()
+                return ToolResult(
+                    output=response.command_outputs[-1].output if response.command_outputs else None,
+                    error=response.command_errors[-1].error if response.command_errors else None,
+                    base64_image=response.b64_screenshot,
+                )
 
-            raise ToolError(f"Invalid action: {action}")
+        raise ToolError(f"Invalid action: {action}")
