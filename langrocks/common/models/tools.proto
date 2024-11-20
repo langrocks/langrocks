@@ -78,6 +78,21 @@ enum WebBrowserCommandType {
   DOUBLE_CLICK = 15; // double click
 }
 
+enum ComputerCommandType {
+  COMPUTER_TERMINATE = 0; // terminate session
+  COMPUTER_KEY = 1; // press key
+  COMPUTER_TYPE = 2; // type text
+  COMPUTER_MOUSE_MOVE = 3; // move mouse
+  COMPUTER_LEFT_CLICK = 4; // left click
+  COMPUTER_LEFT_CLICK_DRAG = 5; // left click drag
+  COMPUTER_RIGHT_CLICK = 6; // right click
+  COMPUTER_MIDDLE_CLICK = 7; // middle click
+  COMPUTER_DOUBLE_CLICK = 8; // double click
+  COMPUTER_SCREENSHOT = 9; // screenshot
+  COMPUTER_CURSOR_POSITION = 10; // cursor position
+  COMPUTER_WAIT = 11; // wait
+}
+
 message WebBrowserCommandOutput {
   int32 index = 1; // index of command
   string output = 2; // output of command
@@ -90,6 +105,13 @@ message WebBrowserCommandError {
 
 message WebBrowserCommand {
   WebBrowserCommandType type = 1; // command type
+  string selector = 2; // selector to use
+  string data = 3; // command data
+}
+
+
+message ComputerCommand {
+  ComputerCommandType type = 1; // command type
   string selector = 2; // selector to use
   string data = 3; // command data
 }
@@ -166,7 +188,44 @@ message WebBrowserContent {
   repeated WebBrowserDownload downloads = 14; // downloads on page
 }
 
+
+message ComputerContent {
+  string url = 1; // url of page
+  string title = 2; // title of page
+  string html = 3; // html of page
+  string text = 4; // text of page
+  bytes screenshot = 5; // screenshot of page if available
+  repeated WebBrowserButton buttons = 6; // buttons on page
+  repeated WebBrowserLink links = 7; // links on page
+  repeated WebBrowserImage images = 8; // images on page
+  repeated WebBrowserInputField input_fields = 9; // inputs on page
+  repeated WebBrowserSelectField select_fields = 10; // selects on page
+  repeated WebBrowserTextAreaField textarea_fields = 11; // textareas on page  
+  repeated WebBrowserCommandOutput command_outputs = 12; // outputs of commands
+  repeated WebBrowserCommandError command_errors = 13; // errors of commands
+  repeated WebBrowserDownload downloads = 14; // downloads on page
+}
+
 message WebBrowserSessionConfig {
+  string init_url = 1; // url to open at the start
+  string terminate_url_pattern = 2; // url pattern to terminate session
+  string session_data = 3; // session data to restore  
+  int32 timeout = 4; // total session timeout in seconds
+  int32 command_timeout = 5; // command timeout in seconds
+  bool text = 6; // return text output
+  bool html = 7; // return html output  
+  bool markdown = 8; // return markdown output
+  bool persist_session = 9; // persist session after done
+  bool capture_screenshot = 10; // capture screenshot of the session
+  bool interactive = 11; // interactive session with user inputs
+  bool record_video = 12; // record video of the session while running
+  bool annotate = 13; // annoatate the page with tags before screenshot
+  repeated string tags_to_extract = 14; // list of tags to extract from the page
+  bool allow_downloads = 15; // allow browser downloads
+}
+
+
+message ComputerSessionConfig {
   string init_url = 1; // url to open at the start
   string terminate_url_pattern = 2; // url pattern to terminate session
   string session_data = 3; // session data to restore  
@@ -197,7 +256,19 @@ enum CodeRunnerState {
   CODE_FINISHED = 3; // code is finished
 }
 
+enum ComputerState {
+  COMPUTER_RUNNING = 0; // computer is running
+  COMPUTER_TERMINATED = 1; // computer is terminated
+  COMPUTER_TIMEOUT = 2; // computer is timed out
+}
+
 message WebBrowserSession {
+  string ws_url = 1; // websocket url to connect to for remote display
+  string session_data = 2; // session data to persist
+  repeated Content videos = 3; // videos of session
+}
+
+message ComputerSession {
   string ws_url = 1; // websocket url to connect to for remote display
   string session_data = 2; // session data to persist
   repeated Content videos = 3; // videos of session
@@ -244,6 +315,17 @@ message CodeRunnerResponse {
   CodeRunnerSession session = 5; // session data  
 }
 
+message ComputerRequest {
+  ComputerSessionConfig session_config = 1; // session configuation
+  repeated ComputerCommand commands = 2; // commands to send to the browser
+}
+
+message ComputerResponse {
+  ComputerSession session = 1; // session data
+  ComputerState state = 2; // state of browser
+  ComputerContent content = 3; // content from the computer after running inputs
+}
+
 service Tools {
 
   rpc GetWebBrowser (stream WebBrowserRequest) returns (stream WebBrowserResponse) {}
@@ -251,5 +333,6 @@ service Tools {
   rpc GetFileConverter (FileConverterRequest) returns (FileConverterResponse) {}
 
   rpc GetCodeRunner (stream CodeRunnerRequest) returns (stream CodeRunnerResponse) {}
-  
+
+  rpc GetComputer (stream ComputerRequest) returns (stream ComputerResponse) {}
 }
