@@ -1,0 +1,14 @@
+name: langrocks
+services:
+  web_browser:
+    image: ${REGISTRY:-}langrocks-web-browser:${TAG:-latest}
+    ports:
+      - 50051:50051
+      - 50052:50052
+      - 50053:50053
+  app:
+    image: ${REGISTRY:-}langrocks-app:${TAG:-latest}
+    ports:
+      - ${LANGROCKS_PORT:-3000}:80
+    depends_on:
+      - web_browser

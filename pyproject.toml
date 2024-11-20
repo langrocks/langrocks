@@ -7,16 +7,19 @@ license = "MIT"
 readme = "README.md"
 packages = [
     {include = "langrocks/app/server.py"},
+    {include = "langrocks/cli.py"},
     {include = "langrocks/common/"},
     {include = "langrocks/client/"},
 ]
 
 [tool.poetry.scripts]
 langrocks-server = "langrocks.app.server:main"
+langrocks = "langrocks.cli:main"
 
 [tool.poetry.dependencies]
-python = ">=3.10"
+python = ">=3.10,<4"
 pydantic = "^2.8.2"
+python-on-whales = "^0.73.0"
 
 
 [tool.poetry.group.web_browser.dependencies]
