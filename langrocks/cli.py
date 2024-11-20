@@ -133,7 +133,7 @@ def main():
         default="ghcr.io/langrocks/",
         help=argparse.SUPPRESS,
     )
-    parent_parser.add_argument("--tag", default="latest", help=argparse.SUPPRESS)
+    parent_parser.add_argument("--tag", default="v0.2.2", help=argparse.SUPPRESS)
 
     parser = argparse.ArgumentParser(description="Langrocks: A collection of tools for LLMs", parents=[parent_parser])
     subparsers = parser.add_subparsers(title="commands", help="Available commands", dest="command")
